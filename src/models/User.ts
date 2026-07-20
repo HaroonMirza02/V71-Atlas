@@ -39,15 +39,14 @@ const UserSchema = new Schema<IUser>(
     { timestamps: true, collection: 'users' }
 );
 
-UserSchema.index({ email: 1 }, { unique: true });
+// email index is already declared inline (unique: true on the field)
 UserSchema.index({ role: 1 });
 
 // Hash password before saving
-UserSchema.pre<IUser>('save', async function (next: any) {
-    if (!this.isModified('password')) return next();
+UserSchema.pre<IUser>('save', async function () {
+    if (!this.isModified('password')) return;
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
-    next();
 });
 
 UserSchema.methods.comparePassword = async function (candidate: string): Promise<boolean> {

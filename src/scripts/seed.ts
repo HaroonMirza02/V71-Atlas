@@ -41,6 +41,13 @@ async function runSeed() {
 
     await connectDatabase();
 
+    // Recreate indexes (critical after schema collection drops)
+    console.log('Building search and query indexes...');
+    await Promise.all([
+        Signal.createIndexes(),
+        RawPayload.createIndexes(),
+    ]);
+
     const startTime = Date.now();
 
     try {
@@ -132,8 +139,8 @@ async function runSeed() {
             }
 
             // Execute bulk insert and skip validation locks
-            await RawPayload.insertMany(rawPayloadsChunk, { ordered: false });
-            await Signal.insertMany(signalsChunk, { ordered: false });
+            await RawPayload.collection.insertMany(rawPayloadsChunk, { ordered: false });
+            await Signal.collection.insertMany(signalsChunk, { ordered: false });
 
             recordsCreated += currentChunkSize;
             const progress = ((recordsCreated / sizeVal) * 100).toFixed(0);
@@ -146,7 +153,7 @@ async function runSeed() {
         console.log(`   Time Ellapsed: ${duration} seconds`);
 
     } catch (err: any) {
-        console.error('❌ Seeding failure:', err.message);
+        console.error('❌ Seeding failure:', err.stack || err.message);
     } finally {
         await disconnectDatabase();
     }

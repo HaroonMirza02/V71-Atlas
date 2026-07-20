@@ -14,7 +14,7 @@ export class HackerNewsConnector extends BaseConnector {
         }
 
         const url = `${config.HN_API_URL}/search_by_date`;
-        const query = 'show hn OR pain point OR launch OR show_hn';
+        const query = 'Show HN OR Ask HN OR launch OR SaaS OR devtools OR "technical debt" OR "software architecture" OR "API" OR startup OR "pain point" OR "looking for developers"';
 
         try {
             const response = await axios.get(url, {

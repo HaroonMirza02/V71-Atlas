@@ -82,7 +82,7 @@ class ConnectorRegistry {
                 ConnectorState.findOneAndUpdate(
                     { connectorId },
                     { $setOnInsert: { connectorId } },
-                    { upsert: true, new: true }
+                    { upsert: true, returnDocument: 'after' }
                 )
             )
         );

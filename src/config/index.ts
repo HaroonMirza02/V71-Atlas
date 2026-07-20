@@ -29,14 +29,14 @@ const envSchema = z.object({
 
     GITHUB_TOKEN: z.string().optional(),
     GITHUB_API_URL: z.string().default('https://api.github.com'),
-    GITHUB_SEARCH_QUERY: z.string().default('market intelligence OR business opportunity OR pain point'),
+    GITHUB_SEARCH_QUERY: z.string().default('saas OR "api integration" OR "software development" OR "devops" OR "machine learning" OR "startup" OR "microservices" OR "cloud native"'),
 
     REMOTIVE_API_URL: z.string().default('https://remotive.com/api/remote-jobs'),
-    REMOTIVE_CATEGORIES: z.string().default('software-dev,devops-sysadmin,data,product'),
+    REMOTIVE_CATEGORIES: z.string().default('software-dev,devops-sysadmin,data,product,backend,frontend,fullstack'),
 
     HN_API_URL: z.string().default('https://hn.algolia.com/api/v1'),
 
-    RSS_FEED_URLS: z.string().default('https://hnrss.org/frontpage,https://feeds.feedburner.com/TechCrunch,https://www.producthunt.com/feed'),
+    RSS_FEED_URLS: z.string().default('https://hnrss.org/newest?points=30,https://feeds.feedburner.com/TechCrunch,https://www.producthunt.com/feed,https://thenewstack.io/feed/,https://www.infoq.com/feed/'),
 
     QUEUE_CONCURRENCY: z.string().default('5').transform(Number),
     QUEUE_MAX_RETRIES: z.string().default('3').transform(Number),

@@ -33,7 +33,7 @@ const ConnectorStateSchema = new Schema<IConnectorState>(
     { timestamps: true, collection: 'connector_states' }
 );
 
-ConnectorStateSchema.index({ connectorId: 1 }, { unique: true });
+// connectorId index is already declared inline (unique: true on the field)
 ConnectorStateSchema.index({ isEnabled: 1 });
 
 export const ConnectorState: Model<IConnectorState> = mongoose.model('ConnectorState', ConnectorStateSchema);
