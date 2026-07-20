@@ -41,7 +41,7 @@ const envSchema = z.object({
     QUEUE_CONCURRENCY: z.string().default('5').transform(Number),
     QUEUE_MAX_RETRIES: z.string().default('3').transform(Number),
     QUEUE_RETRY_DELAY_MS: z.string().default('5000').transform(Number),
-    DEAD_LETTER_QUEUE_NAME: z.string().default('atlas:dlq'),
+    DEAD_LETTER_QUEUE_NAME: z.string().default('atlas-dlq'),
 
     CACHE_TTL_SECONDS: z.string().default('300').transform(Number),
     CACHE_MAX_KEYS: z.string().default('1000').transform(Number),

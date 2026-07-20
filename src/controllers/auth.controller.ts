@@ -4,6 +4,7 @@ import { User } from '../models/User';
 import { config } from '../config';
 import { JwtPayload, UserRole } from '../types';
 import { logger, auditLog } from '../lib/logger';
+import { buildAuditContext } from '../utils/audit-context';
 
 /** Issue access and refresh tokens */
 function generateTokens(userId: string, role: UserRole) {
@@ -31,6 +32,15 @@ export async function login(req: Request, res: Response): Promise<void> {
     try {
         const user = await User.findOne({ email }).select('+password');
         if (!user || !(await user.comparePassword(password))) {
+            auditLog({
+                userId: user ? user.id : 'unknown',
+                userEmail: email,
+                action: 'LOGIN',
+                resource: 'auth',
+                outcome: 'failure',
+                details: { reason: 'invalid_credentials' },
+                ...buildAuditContext(req),
+            });
             res.status(401).json({
                 error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password' },
             });
@@ -38,6 +48,15 @@ export async function login(req: Request, res: Response): Promise<void> {
         }
 
         if (!user.isActive) {
+            auditLog({
+                userId: user.id,
+                userEmail: user.email,
+                action: 'LOGIN',
+                resource: 'auth',
+                outcome: 'failure',
+                details: { reason: 'account_disabled' },
+                ...buildAuditContext(req),
+            });
             res.status(403).json({
                 error: { code: 'USER_DEACTIVATED', message: 'User account is disabled' },
             });
@@ -52,10 +71,12 @@ export async function login(req: Request, res: Response): Promise<void> {
 
         auditLog({
             userId: user.id,
+            userEmail: user.email,
             action: 'LOGIN',
             resource: 'auth',
             outcome: 'success',
-            details: { email: user.email, role: user.role },
+            details: { role: user.role },
+            ...buildAuditContext(req),
         });
 
         res.json({
@@ -95,21 +116,17 @@ export async function signup(req: Request, res: Response): Promise<void> {
             return;
         }
 
-        // Role lock: only ADMIN can assign ADMIN or ANALYST roles on signups.
-        // If not authenticated, we default to VIEWER, but if the database has 0 users
-        // we auto-appoint the first signup as ADMIN for self-bootstrapping clean installation!
+        // Public self-registration always creates a VIEWER account, with one
+        // exception: if the database has no users at all yet, the very first
+        // signup bootstraps as ADMIN so a freshly deployed system has a way
+        // in. Any role value sent in the request body is ignored here, on
+        // purpose, since this endpoint has no authentication in front of it.
+        // Creating ADMIN or ANALYST accounts is handled separately by
+        // POST /users, which requires an authenticated ADMIN caller. See
+        // createUser() below.
         const userCount = await User.countDocuments();
-        let assignedRole: UserRole = 'VIEWER';
-
-        if (userCount === 0) {
-            assignedRole = 'ADMIN';
-        } else if (role) {
-            // If a token exists and the request is made by an ADMIN, assign the requested role
-            const requestingUserRole = req.user?.role;
-            if (requestingUserRole === 'ADMIN') {
-                assignedRole = role as UserRole;
-            }
-        }
+        const assignedRole: UserRole = userCount === 0 ? 'ADMIN' : 'VIEWER';
+        void role; // intentionally ignored on this public route
 
         const newUser = new User({
             email,
@@ -124,11 +141,13 @@ export async function signup(req: Request, res: Response): Promise<void> {
 
         auditLog({
             userId: newUser.id,
+            userEmail: newUser.email,
             action: 'REGISTER',
             resource: 'user',
             resourceId: newUser.id,
             outcome: 'success',
-            details: { email: newUser.email, role: newUser.role },
+            details: { role: newUser.role },
+            ...buildAuditContext(req),
         });
 
         const { accessToken, refreshToken } = generateTokens(newUser.id, newUser.role);
@@ -180,6 +199,69 @@ export async function profile(req: Request, res: Response): Promise<void> {
     } catch (err: any) {
         res.status(500).json({
             error: { code: 'SERVER_ERROR', message: 'Internal server error' },
+        });
+    }
+}
+
+/**
+ * Admin-only user creation. Unlike public signup, this endpoint can assign
+ * any role because it sits behind authenticateToken + requirePermission
+ * ('users:manage'), which only ADMIN accounts hold. This is the correct,
+ * working replacement for the role-assignment branch that used to live
+ * (non-functionally) inside signup().
+ */
+export async function createUser(req: Request, res: Response): Promise<void> {
+    const { email, password, name, role } = req.body;
+
+    if (!email || !password || !name || !role) {
+        res.status(400).json({
+            error: { code: 'INVALID_INPUT', message: 'Email, password, name, and role are required' },
+        });
+        return;
+    }
+
+    try {
+        const existing = await User.findOne({ email });
+        if (existing) {
+            res.status(409).json({
+                error: { code: 'USER_EXISTS', message: 'A user with this email already exists' },
+            });
+            return;
+        }
+
+        const newUser = new User({ email, password, name, role: role as UserRole });
+        await newUser.save();
+
+        logger.info('User created by administrator', {
+            createdEmail: newUser.email,
+            createdRole: newUser.role,
+            createdBy: req.user!.email,
+        });
+
+        auditLog({
+            userId: req.user!.id,
+            userEmail: req.user!.email,
+            action: 'CREATE_USER',
+            resource: 'user',
+            resourceId: newUser.id,
+            outcome: 'success',
+            details: { createdEmail: newUser.email, assignedRole: newUser.role },
+            ...buildAuditContext(req),
+        });
+
+        res.status(201).json({
+            message: 'User created successfully',
+            data: {
+                id: newUser.id,
+                email: newUser.email,
+                name: newUser.name,
+                role: newUser.role,
+            },
+        });
+    } catch (err: any) {
+        logger.error('Admin user creation error', { error: err.message });
+        res.status(500).json({
+            error: { code: 'SERVER_ERROR', message: 'Internal server error while creating user' },
         });
     }
 }

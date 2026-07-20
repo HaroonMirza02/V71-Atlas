@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { login, signup, profile } from '../controllers/auth.controller';
+import { login, signup, profile, createUser } from '../controllers/auth.controller';
 import { getSignals, getSignalById, reviewSignal } from '../controllers/signals.controller';
-import { getConnectors, triggerConnector, updateConnectorState } from '../controllers/connectors.controller';
+import { getConnectors, triggerConnector, updateConnectorState, getFailedJobs } from '../controllers/connectors.controller';
 import { listBackups, doBackup, doRestore } from '../controllers/backup.controller';
 import { getSystemMetrics } from '../controllers/metrics.controller';
 import { authenticateToken, requirePermission } from '../middleware/auth';
@@ -9,6 +9,7 @@ import { validateBody, sanitizeInput } from '../middleware/validate';
 import {
     loginSchema,
     signupSchema,
+    createUserSchema,
     reviewSchema,
     connectorStateSchema,
     restoreSchema,
@@ -23,6 +24,15 @@ router.use(sanitizeInput);
 router.post('/auth/login', validateBody(loginSchema), login);
 router.post('/auth/signup', validateBody(signupSchema), signup); // Dynamic signup includes auth bootstrapping
 router.get('/auth/profile', authenticateToken, profile);
+
+// ── User Management Routes (ADMIN only) ──────────────────────
+router.post(
+    '/users',
+    authenticateToken,
+    requirePermission('users:manage'),
+    validateBody(createUserSchema),
+    createUser
+);
 
 // ── Signals Routes ─────────────────────────────────────────────
 router.get('/signals', authenticateToken, requirePermission('signals:read'), getSignals);
@@ -49,6 +59,12 @@ router.put(
     requirePermission('users:manage'), // ADMIN-only switch control limit
     validateBody(connectorStateSchema),
     updateConnectorState
+);
+router.get(
+    '/connectors/failed-jobs',
+    authenticateToken,
+    requirePermission('connectors:read'),
+    getFailedJobs
 );
 
 // ── Backup Routes ──────────────────────────────────────────────

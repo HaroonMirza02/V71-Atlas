@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import { registry } from '../connectors';
 import { ConnectorState } from '../models/ConnectorState';
-import { addIngestJob } from '../queues/ingest.queue';
+import { addIngestJob, getIngestQueue } from '../queues/ingest.queue';
 import { logger, auditLog } from '../lib/logger';
+import { buildAuditContext } from '../utils/audit-context';
 import { uuid } from '../utils/uuid';
 
 export async function getConnectors(req: Request, res: Response): Promise<void> {
@@ -59,7 +60,9 @@ export async function triggerConnector(req: Request, res: Response): Promise<voi
 
         // Audit log
         auditLog({
+            ...buildAuditContext(req),
             userId: req.user!.id,
+            userEmail: req.user!.email,
             action: 'TRIGGER_CONNECTOR',
             resource: 'connector',
             resourceId: id,
@@ -79,7 +82,9 @@ export async function triggerConnector(req: Request, res: Response): Promise<voi
         logger.error('Failed to trigger connector manually', { id, error: err.message });
 
         auditLog({
+            ...buildAuditContext(req),
             userId: req.user!.id,
+            userEmail: req.user!.email,
             action: 'TRIGGER_CONNECTOR',
             resource: 'connector',
             resourceId: id,
@@ -124,7 +129,9 @@ export async function updateConnectorState(req: Request, res: Response): Promise
 
         // Audit log
         auditLog({
+            ...buildAuditContext(req),
             userId: req.user!.id,
+            userEmail: req.user!.email,
             action: 'UPDATE_CONNECTOR_STATE',
             resource: 'connector',
             resourceId: id,
@@ -143,6 +150,39 @@ export async function updateConnectorState(req: Request, res: Response): Promise
         logger.error('Failed to update connector configuration', { id, error: err.message });
         res.status(500).json({
             error: { code: 'SERVER_ERROR', message: 'Failed to update connector state configuration' },
+        });
+    }
+}
+
+/**
+ * Returns jobs that exhausted their retry attempts. BullMQ keeps these in
+ * its own failed set rather than deleting them (see removeOnFail in
+ * ingest.queue.ts), which is this system's dead-letter mechanism. This
+ * endpoint is what makes that set reviewable instead of a bare count, so a
+ * stuck or broken connector is visible instead of discovered a week later.
+ */
+export async function getFailedJobs(req: Request, res: Response): Promise<void> {
+    const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit || 25), 10) || 25));
+
+    try {
+        const queue = getIngestQueue();
+        const failedJobs = await queue.getFailed(0, limit - 1);
+
+        const data = failedJobs.map((job) => ({
+            jobId: job.id,
+            connectorId: job.data?.connectorId,
+            triggeredBy: job.data?.triggeredBy,
+            requestId: job.data?.requestId,
+            attemptsMade: job.attemptsMade,
+            failedReason: job.failedReason,
+            timestamp: job.timestamp ? new Date(job.timestamp).toISOString() : undefined,
+        }));
+
+        res.json({ data, meta: { count: data.length } });
+    } catch (err: any) {
+        logger.error('Failed to read failed jobs from queue', { error: err.message });
+        res.status(500).json({
+            error: { code: 'SERVER_ERROR', message: 'Failed to read failed jobs from queue' },
         });
     }
 }

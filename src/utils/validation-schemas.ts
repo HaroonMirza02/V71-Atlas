@@ -12,6 +12,13 @@ export const signupSchema = z.object({
     role: z.enum(['ADMIN', 'ANALYST', 'VIEWER']).optional(),
 });
 
+export const createUserSchema = z.object({
+    email: z.string().email('Invalid email address format'),
+    password: z.string().min(8, 'Password must be at least 8 characters long'),
+    name: z.string().min(2, 'Name must be at least 2 characters long').max(100),
+    role: z.enum(['ADMIN', 'ANALYST', 'VIEWER']),
+});
+
 export const reviewSchema = z.object({
     status: z.enum(['REVIEWED', 'ARCHIVED', 'REJECTED']),
     reviewNotes: z.string().max(2000, 'Review notes must not exceed 2000 characters').optional(),

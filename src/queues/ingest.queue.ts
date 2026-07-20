@@ -4,7 +4,7 @@ import { IngestJobPayload } from '../types';
 import { logger } from '../lib/logger';
 
 // Name of queue
-export const INGEST_QUEUE_NAME = 'atlas:ingest';
+export const INGEST_QUEUE_NAME = 'atlas-ingest';
 
 let ingestQueue: any = null;
 

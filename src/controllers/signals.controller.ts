@@ -3,6 +3,7 @@ import { Signal, buildDedupHash } from '../models/Signal';
 import { RawPayload } from '../models/Signal';
 import { withCache, buildCacheKey, invalidateCachePattern } from '../lib/cache';
 import { logger, auditLog } from '../lib/logger';
+import { buildAuditContext } from '../utils/audit-context';
 import { SignalCategory, SignalStatus } from '../types';
 import mongoose from 'mongoose';
 
@@ -213,7 +214,9 @@ export async function reviewSignal(req: Request, res: Response): Promise<void> {
 
         // Audit log
         auditLog({
+            ...buildAuditContext(req),
             userId: req.user!.id,
+            userEmail: req.user!.email,
             action: 'REVIEW_SIGNAL',
             resource: 'signal',
             resourceId: signal.id,

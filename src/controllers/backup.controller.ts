@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { createEncryptedBackup, restoreEncryptedBackup, getBackupsList } from '../services/backup';
 import { logger, auditLog } from '../lib/logger';
+import { buildAuditContext } from '../utils/audit-context';
 import path from 'path';
 
 export async function listBackups(req: Request, res: Response): Promise<void> {
@@ -18,7 +19,9 @@ export async function doBackup(req: Request, res: Response): Promise<void> {
         const backupResult = await createEncryptedBackup();
 
         auditLog({
+            ...buildAuditContext(req),
             userId: req.user!.id,
+            userEmail: req.user!.email,
             action: 'EXPORT_BACKUP',
             resource: 'database',
             outcome: 'success',
@@ -34,7 +37,9 @@ export async function doBackup(req: Request, res: Response): Promise<void> {
         });
     } catch (err: any) {
         auditLog({
+            ...buildAuditContext(req),
             userId: req.user!.id,
+            userEmail: req.user!.email,
             action: 'EXPORT_BACKUP',
             resource: 'database',
             outcome: 'failure',
@@ -63,7 +68,9 @@ export async function doRestore(req: Request, res: Response): Promise<void> {
         const result = await restoreEncryptedBackup(TargetPath);
 
         auditLog({
+            ...buildAuditContext(req),
             userId: req.user!.id,
+            userEmail: req.user!.email,
             action: 'RESTORE_BACKUP',
             resource: 'database',
             outcome: 'success',
@@ -78,7 +85,9 @@ export async function doRestore(req: Request, res: Response): Promise<void> {
         });
     } catch (err: any) {
         auditLog({
+            ...buildAuditContext(req),
             userId: req.user!.id,
+            userEmail: req.user!.email,
             action: 'RESTORE_BACKUP',
             resource: 'database',
             outcome: 'failure',
