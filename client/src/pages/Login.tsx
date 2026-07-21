@@ -87,6 +87,9 @@ export default function Login() {
               </button>
 
               <div className="pt-6 mt-6 border-t border-zinc-800/80">
+                <p className="text-center text-[12px] text-zinc-500 mb-4 px-2">
+                  Want to explore? Just tap <strong className="text-zinc-300 font-medium">Admin Demo</strong> or <strong className="text-zinc-300 font-medium">Analyst Demo</strong> below to auto-fill credentials, then click Continue.
+                </p>
                 <div className="grid grid-cols-2 gap-3">
                   <button type="button" onClick={() => autofill('ADMIN')} className="flex h-9 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900/50 text-[12px] font-medium text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 transition-colors">
                     Admin Demo
