@@ -76,30 +76,101 @@ export default function Dashboard() {
           </div>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-2 mb-10">
-          <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card h-[300px] flex flex-col">
-            <SectionHeader
-              title="Signal Distribution"
-              description="Breakdown of ingested market signals by top categories"
-            />
-            <div className="flex-1 mt-2 min-h-0">
-              <CategoryChart data={metrics?.signals.byCategory || {}} />
-            </div>
-          </div>
-          <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card h-[300px] flex flex-col">
-            <SectionHeader
-              title="Pipeline Status"
-              description="Current breakdown of signals in the review pipeline"
-            />
-            <div className="flex-1 mt-2 min-h-0 relative">
-               <StatusChart data={metrics?.signals.byStatus || {}} />
-               <div className="absolute inset-0 pointer-events-none flex items-center justify-center flex-col">
-                 <span className="text-3xl font-semibold num">{metrics?.signals.totalSignals || 0}</span>
-                 <span className="text-xs text-muted-foreground">Total</span>
-               </div>
-            </div>
-          </div>
-        </section>
+        {isAdmin ? (
+          <>
+            <section className="grid gap-6 lg:grid-cols-2 mb-10">
+              <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card h-[300px] flex flex-col">
+                <SectionHeader
+                  title="System Memory Footprint"
+                  description="Real-time heap and RSS usage of the API process"
+                />
+                <div className="flex-1 mt-4 min-h-0 flex flex-col justify-center space-y-6">
+                   <div>
+                     <div className="flex justify-between text-xs mb-2 text-muted-foreground">
+                        <span>Heap Used</span>
+                        <span className="num text-foreground">{((metrics?.system.heapUsedBytes || 0) / 1024 / 1024).toFixed(1)} MB / {((metrics?.system.heapTotalBytes || 0) / 1024 / 1024).toFixed(1)} MB</span>
+                     </div>
+                     <div className="h-2 w-full bg-muted/30 rounded-full overflow-hidden">
+                        <div className="h-full bg-primary" style={{ width: `${Math.min(((metrics?.system.heapUsedBytes || 0) / (metrics?.system.heapTotalBytes || 1)) * 100, 100)}%` }}></div>
+                     </div>
+                   </div>
+                   <div>
+                     <div className="flex justify-between text-xs mb-2 text-muted-foreground">
+                        <span>Resident Set Size (RSS)</span>
+                        <span className="num text-foreground">{((metrics?.system.rssBytes || 0) / 1024 / 1024).toFixed(1)} MB</span>
+                     </div>
+                     <div className="h-2 w-full bg-muted/30 rounded-full overflow-hidden">
+                        <div className="h-full bg-accent" style={{ width: `${Math.min(((metrics?.system.rssBytes || 0) / 500000000) * 100, 100)}%` }}></div>
+                     </div>
+                   </div>
+                   <div className="flex justify-between text-xs pt-4 border-t border-border/50">
+                     <span className="text-muted-foreground">Database Status</span>
+                     <span className={`font-medium ${metrics?.database.status === 'connected' ? 'text-success' : 'text-warning'}`}>{metrics?.database.status?.toUpperCase()}</span>
+                   </div>
+                   <div className="flex justify-between text-xs">
+                     <span className="text-muted-foreground">Cache & Queue (Redis)</span>
+                     <span className={`font-medium ${metrics?.redis.status === 'connected' ? 'text-success' : 'text-warning'}`}>{metrics?.redis.status?.toUpperCase()}</span>
+                   </div>
+                </div>
+              </div>
+              <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card h-[300px] flex flex-col">
+                <SectionHeader
+                  title="Connector Telemetry"
+                  description="Status and yields of automated data sources"
+                />
+                <div className="flex-1 mt-4 min-h-0 overflow-y-auto pr-2">
+                   <div className="space-y-3">
+                     {metrics?.connectors.map((c: any) => (
+                       <div key={c.connectorId} className="flex justify-between items-center text-sm border-b border-border/50 pb-2 last:border-0">
+                         <div className="flex items-center gap-2">
+                           <div className={`h-2 w-2 rounded-full ${c.isEnabled ? 'bg-success' : 'bg-muted'}`}></div>
+                           <span className="font-medium text-[13px] uppercase">{c.connectorId}</span>
+                         </div>
+                         <div className="flex gap-4 text-right">
+                           <div className="flex flex-col">
+                             <span className="text-[10px] text-muted-foreground">Fetched</span>
+                             <span className="text-xs num font-medium">{c.fetched}</span>
+                           </div>
+                           <div className="flex flex-col">
+                             <span className="text-[10px] text-muted-foreground">Errors</span>
+                             <span className={`text-xs num font-medium ${c.consecutiveErrors > 0 ? 'text-destructive' : 'text-foreground'}`}>{c.consecutiveErrors}</span>
+                           </div>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                </div>
+              </div>
+            </section>
+          </>
+        ) : (
+          <>
+            <section className="grid gap-6 lg:grid-cols-2 mb-10">
+              <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card h-[300px] flex flex-col">
+                <SectionHeader
+                  title="Signal Distribution"
+                  description="Breakdown of ingested market signals by top categories"
+                />
+                <div className="flex-1 mt-2 min-h-0">
+                  <CategoryChart data={metrics?.signals.byCategory || {}} />
+                </div>
+              </div>
+              <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card h-[300px] flex flex-col">
+                <SectionHeader
+                  title="Pipeline Status"
+                  description="Current breakdown of signals in the review pipeline"
+                />
+                <div className="flex-1 mt-2 min-h-0 relative">
+                   <StatusChart data={metrics?.signals.byStatus || {}} />
+                   <div className="absolute inset-0 pointer-events-none flex items-center justify-center flex-col">
+                     <span className="text-3xl font-semibold num">{metrics?.signals.totalSignals || 0}</span>
+                     <span className="text-xs text-muted-foreground">Total</span>
+                   </div>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
 
         <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
           <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card">
@@ -131,7 +202,7 @@ export default function Dashboard() {
           </div>
           <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card">
             <SectionHeader
-              title="Action Required"
+              title={isAdmin ? "System Alerts" : "Action Required"}
               action={
                 <a href="/signals" className="text-[12px] text-muted-foreground hover:text-foreground">
                   View all
@@ -143,7 +214,7 @@ export default function Dashboard() {
                 <div key={s._id} className="rounded-md border border-border p-3">
                   <div className="flex items-center gap-2">
                      <div className="h-1.5 w-1.5 rounded-full bg-warning"></div>
-                     <span className="text-[13px] font-medium leading-snug truncate">{s.company || 'Unknown'} - {s.category}</span>
+                     <span className="text-[13px] font-medium leading-snug truncate">{isAdmin ? s.sourceId.toUpperCase() : (s.company || 'Unknown')} - {s.category}</span>
                   </div>
                   <p className="mt-2 text-[11px] text-muted-foreground line-clamp-2">{s.title}</p>
                 </div>
