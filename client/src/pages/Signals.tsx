@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSignals } from '@/hooks/use-queries';
 import { api } from '@/lib/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,16 +8,24 @@ import { OpportunityCard } from '@/components/atlas/opportunity-card';
 import { stripHtml } from '@/lib/utils';
 import { Loader2, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Signals() {
   const [q, setQ] = useState('');
+  const [debouncedQ, setDebouncedQ] = useState('');
   const [status, setStatus] = useState('');
   const [category, setCategory] = useState('');
   
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQ(q), 500);
+    return () => clearTimeout(timer);
+  }, [q]);
+
   const { data, isLoading } = useSignals({ 
      limit: 20, 
      ...(status && { status }),
-     ...(category && { category })
+     ...(category && { category }),
+     ...(debouncedQ && { search: debouncedQ })
   });
   
   const queryClient = useQueryClient();
@@ -62,27 +70,35 @@ export default function Signals() {
             />
           </div>
           
-          <label className="inline-flex h-9 items-center gap-2 rounded-md border border-border pl-3 pr-1 text-[12px]">
-            <span className="text-muted-foreground">Status</span>
-            <select value={status} onChange={e => setStatus(e.target.value)} className="h-8 cursor-pointer bg-transparent pr-2 text-foreground outline-none">
-              <option value="">All</option>
-              <option value="PENDING">Pending</option>
-              <option value="REVIEWED">Reviewed</option>
-              <option value="REJECTED">Rejected</option>
-              <option value="ARCHIVED">Archived</option>
-            </select>
-          </label>
+          <div className="flex items-center gap-2">
+            <Select value={status || "ALL"} onValueChange={(val) => setStatus(val === "ALL" ? "" : val)}>
+              <SelectTrigger className="w-[140px] h-9 text-[12px] bg-transparent">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Statuses</SelectItem>
+                <SelectItem value="PENDING">Pending</SelectItem>
+                <SelectItem value="REVIEWED">Reviewed</SelectItem>
+                <SelectItem value="REJECTED">Rejected</SelectItem>
+                <SelectItem value="ARCHIVED">Archived</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           
-          <label className="inline-flex h-9 items-center gap-2 rounded-md border border-border pl-3 pr-1 text-[12px]">
-            <span className="text-muted-foreground">Category</span>
-            <select value={category} onChange={e => setCategory(e.target.value)} className="h-8 cursor-pointer bg-transparent pr-2 text-foreground outline-none">
-              <option value="">All</option>
-              <option value="JOB_POSTING">Job Posting</option>
-              <option value="TECHNOLOGY_TREND">Tech Trend</option>
-              <option value="OPEN_SOURCE">Open Source</option>
-              <option value="BUSINESS_OPPORTUNITY">Biz Opp</option>
-            </select>
-          </label>
+          <div className="flex items-center gap-2">
+            <Select value={category || "ALL"} onValueChange={(val) => setCategory(val === "ALL" ? "" : val)}>
+              <SelectTrigger className="w-[160px] h-9 text-[12px] bg-transparent">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Categories</SelectItem>
+                <SelectItem value="JOB_POSTING">Job Posting</SelectItem>
+                <SelectItem value="TECHNOLOGY_TREND">Tech Trend</SelectItem>
+                <SelectItem value="OPEN_SOURCE">Open Source</SelectItem>
+                <SelectItem value="BUSINESS_OPPORTUNITY">Biz Opp</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           {(q || status || category) && (
             <button

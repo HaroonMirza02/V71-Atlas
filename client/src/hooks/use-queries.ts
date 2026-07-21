@@ -53,7 +53,7 @@ export interface Signal {
   sourceId: string;
 }
 
-export function useSignals(params?: { category?: string; status?: string; limit?: number }) {
+export function useSignals(params?: { category?: string; status?: string; limit?: number; search?: string }) {
   return useQuery({
     queryKey: ['signals', params],
     queryFn: async () => {
