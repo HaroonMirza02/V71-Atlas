@@ -23,7 +23,7 @@ export default function Signals() {
   const queryClient = useQueryClient();
   const reviewMutation = useMutation({
     mutationFn: async ({ id, newStatus }: { id: string, newStatus: string }) => {
-      await api.post(`/signals/${id}/review`, { status: newStatus });
+      await api.put(`/signals/${id}/review`, { status: newStatus });
     },
     onSuccess: (_, variables) => {
       toast.success(`Signal ${variables.newStatus === 'REVIEWED' ? 'qualified' : 'archived'}`);
