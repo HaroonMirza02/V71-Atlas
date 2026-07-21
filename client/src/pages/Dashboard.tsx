@@ -93,11 +93,11 @@ export default function Dashboard() {
             <section className="grid gap-6 lg:grid-cols-2 mb-10">
               <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card h-[300px] flex flex-col">
                 <SectionHeader
-                  title="Data Source Yields"
-                  description="Comparison of raw records fetched vs. qualified signals ingested"
+                  title="Signal Distribution"
+                  description="Breakdown of ingested market signals by top categories"
                 />
-                <div className="flex-1 mt-4 min-h-0">
-                   <YieldChart data={metrics?.connectors || []} />
+                <div className="flex-1 mt-2 min-h-0">
+                  <CategoryChart data={metrics?.signals.byCategory || {}} />
                 </div>
               </div>
               <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card h-[300px] flex flex-col">
