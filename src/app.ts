@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
+import path from 'path';
 import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
@@ -75,14 +76,17 @@ app.get('/status', (_req: Request, res: Response) => {
 // ── Versioned Core API Router Wiring ──────────────────────────
 app.use(`/api/${config.API_VERSION}`, router);
 
-// ── API Root Landing page ─────────────────────────────────────
-app.get('/', (_req: Request, res: Response) => {
-    res.json({
-        message: 'Welcome to Vision71 Project Atlas Market Intelligence API Platform Web Service.',
-        version: '1.0.0',
-        documentation: '/api/v1/docs',
-        status: '/status',
-    });
+// ── Serve React Client ────────────────────────────────────────
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, '../client/dist')));
+
+// SPA Fallback - any GET route not starting with /api goes to index.html
+app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api/') && !req.path.startsWith('/status')) {
+        res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    } else {
+        next();
+    }
 });
 
 // ── Resource Not Found handler (404) ──────────────────────────

@@ -62,6 +62,10 @@ export function sanitizeInput(req: Request, _res: Response, next: NextFunction):
     }
 
     if (req.body) req.body = sanitize(req.body);
-    if (req.query) req.query = sanitize(req.query);
+    if (req.query) {
+        const sanitizedQuery = sanitize(req.query);
+        Object.keys(req.query).forEach(k => delete req.query[k]);
+        Object.assign(req.query, sanitizedQuery);
+    }
     next();
 }

@@ -1,0 +1,132 @@
+import React from 'react';
+import { useSystemMetrics, useSignals } from '@/hooks/use-queries';
+import { useAuth } from '@/context/AuthContext';
+import { StatCard } from '@/components/atlas/stat-card';
+import { SectionHeader } from '@/components/atlas/section-header';
+import { TopNav } from '@/components/atlas/top-nav';
+import { Loader2 } from 'lucide-react';
+import { TrendsChart } from '@/components/atlas/trends-chart'; // We will mock this temporarily or adapt it
+import { AlertsFeed } from '@/components/atlas/alerts-feed'; // Adapt this
+
+export default function Dashboard() {
+  const { user } = useAuth();
+  const { data: metrics, isLoading: isMetricsLoading } = useSystemMetrics();
+  const { data: signalsRes, isLoading: isSignalsLoading } = useSignals({ limit: 10 });
+  const { data: alertsRes, isLoading: isAlertsLoading } = useSignals({ status: 'PENDING', limit: 6 });
+
+  // Skeleton UI for fast perceived load
+  if (isMetricsLoading || isSignalsLoading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <TopNav />
+        <div className="mx-auto max-w-[1400px] space-y-10 px-4 py-8 sm:px-6 lg:py-10">
+           <div className="h-8 w-64 animate-pulse rounded bg-muted/60 mb-8" />
+           <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 mb-10">
+              {[1,2,3,4,5].map(i => <div key={i} className="h-28 animate-pulse rounded-lg bg-card border border-border" />)}
+           </div>
+           <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+              <div className="h-[400px] animate-pulse rounded-lg bg-card border border-border" />
+              <div className="h-[400px] animate-pulse rounded-lg bg-card border border-border" />
+           </div>
+        </div>
+      </div>
+    );
+  }
+
+  const signals = signalsRes?.data || [];
+  const alerts = alertsRes?.data || [];
+  
+  // Dashboard view adaptation based on role
+  const isAdmin = user?.role === 'ADMIN';
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <TopNav />
+      <div className="mx-auto max-w-[1400px] space-y-10 px-4 py-8 sm:px-6 lg:py-10 animate-in fade-in duration-300">
+        <section>
+          <div className="mb-6 grid grid-cols-1 items-end gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight md:text-[34px]">
+                {isAdmin ? 'System Intelligence Overview' : 'Market signals for Vision71.'}
+              </h1>
+              <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+                {isAdmin 
+                  ? 'Real-time telemetry of ingestion queues, connectors, and database metrics.' 
+                  : 'Searchable opportunities from hiring, product, developer, and demand signals.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <StatCard label="Total Signals" value={metrics?.signals.totalSignals || 0} />
+            <StatCard label="Pending Review" value={metrics?.signals.byStatus?.['PENDING'] || 0} />
+            <StatCard label="Active Connectors" value={metrics?.connectors.filter(c => c.isEnabled).length || 0} />
+            {isAdmin ? (
+              <>
+                <StatCard label="Queue Waiting" value={metrics?.queue.waiting || 0} />
+                <StatCard label="Uptime (hrs)" value={Math.floor((metrics?.system.uptimeSeconds || 0) / 3600)} />
+              </>
+            ) : (
+              <>
+                <StatCard label="Qualified" value={metrics?.signals.byStatus?.['REVIEWED'] || 0} />
+                <StatCard label="Archived" value={metrics?.signals.byStatus?.['ARCHIVED'] || 0} />
+              </>
+            )}
+          </div>
+        </section>
+
+        <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+          <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card">
+            <SectionHeader
+              title={isAdmin ? "System Ingestion Activity" : "Recent Market Signals"}
+              description={isAdmin ? "Real-time stream of parsed records" : "Latest opportunities matching your criteria"}
+            />
+            <div className="mt-4 space-y-3">
+              {signals.slice(0, 5).map((s: any) => (
+                <div key={s._id} className="flex items-start justify-between rounded-md border border-border p-3 transition-colors hover:bg-accent/40">
+                  <div>
+                     <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{s.title || 'Untitled Signal'}</span>
+                        <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] text-primary">{s.category}</span>
+                     </div>
+                     <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{s.description}</p>
+                     <div className="mt-2 flex gap-2">
+                        {s.technologies?.slice(0, 3).map((t: string) => <span key={t} className="text-[10px] text-muted-foreground border border-border rounded px-1.5">{t}</span>)}
+                     </div>
+                  </div>
+                  <div className="text-right">
+                     <span className="text-[11px] text-muted-foreground block">{new Date(s.discoveredAt).toLocaleDateString()}</span>
+                     <span className="text-[10px] text-muted-foreground mt-1 uppercase block">{s.sourceId}</span>
+                  </div>
+                </div>
+              ))}
+              {signals.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">No recent signals found.</div>}
+            </div>
+          </div>
+          <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card">
+            <SectionHeader
+              title="Action Required"
+              action={
+                <a href="/signals" className="text-[12px] text-muted-foreground hover:text-foreground">
+                  View all
+                </a>
+              }
+            />
+            <div className="mt-4 space-y-3">
+               {alerts.slice(0, 5).map((s: any) => (
+                <div key={s._id} className="rounded-md border border-border p-3">
+                  <div className="flex items-center gap-2">
+                     <div className="h-1.5 w-1.5 rounded-full bg-warning"></div>
+                     <span className="text-[13px] font-medium leading-snug truncate">{s.company || 'Unknown'} - {s.category}</span>
+                  </div>
+                  <p className="mt-2 text-[11px] text-muted-foreground line-clamp-2">{s.title}</p>
+                </div>
+              ))}
+               {alerts.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">No pending alerts.</div>}
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}

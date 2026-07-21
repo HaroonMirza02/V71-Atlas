@@ -1,0 +1,166 @@
+@import "tailwindcss" source(none);
+@source "../src";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Inline animation utilities (replaces tw-animate-css) */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slide-in-from-right {
+  from { transform: translateX(1rem); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slide-in-from-bottom {
+  from { transform: translateY(0.5rem); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.animate-in { animation: fade-in 0.3s ease-out both; }
+.fade-in { animation-name: fade-in; }
+.slide-in-from-right-4 { animation-name: slide-in-from-right; }
+.slide-in-from-bottom-2 { animation-name: slide-in-from-bottom; }
+.animate-spin { animation: spin 1s linear infinite; }
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-neutral: var(--neutral);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+}
+
+:root {
+  --radius: 0.5rem;
+
+  /* Base — pure white, near-black */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.18 0.01 260);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.01 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.01 260);
+
+  /* Accent — electric indigo, used sparingly */
+  --primary: oklch(0.42 0.19 275);
+  --primary-foreground: oklch(0.99 0 0);
+
+  --secondary: oklch(0.975 0.002 260);
+  --secondary-foreground: oklch(0.22 0.01 260);
+
+  --muted: oklch(0.975 0.002 260);
+  --muted-foreground: oklch(0.55 0.01 260);
+
+  --accent: oklch(0.965 0.005 275);
+  --accent-foreground: oklch(0.42 0.19 275);
+
+  --destructive: oklch(0.58 0.22 27);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --border: oklch(0.93 0.004 260);
+  --input: oklch(0.93 0.004 260);
+  --ring: oklch(0.42 0.19 275);
+
+  /* Signal palette — deliberate, not decorative */
+  --success: oklch(0.62 0.16 155); /* strong opportunity */
+  --warning: oklch(0.78 0.15 75); /* medium */
+  --neutral: oklch(0.72 0.01 260); /* low */
+
+  --chart-1: oklch(0.42 0.19 275);
+  --chart-2: oklch(0.62 0.16 155);
+  --chart-3: oklch(0.78 0.15 75);
+  --chart-4: oklch(0.55 0.12 220);
+  --chart-5: oklch(0.35 0.05 260);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html,
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .font-mono,
+  code,
+  kbd,
+  samp {
+    font-family: var(--font-mono);
+    font-feature-settings: "zero", "ss01";
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--primary) 20%, transparent);
+  }
+}
+
+@utility num {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum", "zero";
+  letter-spacing: -0.01em;
+}
+
+@utility hairline {
+  border-color: color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+
+@utility card-lift {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -12px color-mix(in oklab, var(--foreground) 12%, transparent);
+    border-color: color-mix(in oklab, var(--foreground) 14%, transparent);
+  }
+}
+
+@utility ticker {
+  font-variant-numeric: tabular-nums;
+}
