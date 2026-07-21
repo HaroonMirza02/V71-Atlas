@@ -24,3 +24,4 @@ services:
   - type: redis
     name: atlas-redis
     plan: free
+    ipAllowList: [] # Required: Restricts access to internal Render services only
