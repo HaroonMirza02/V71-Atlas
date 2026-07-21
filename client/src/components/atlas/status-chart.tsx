@@ -44,8 +44,8 @@ export function StatusChart({ data }: Props) {
             if (active && payload && payload.length) {
               return (
                 <div className="rounded-md border border-border bg-card px-3 py-2 shadow text-xs">
-                  <span className="font-medium capitalize mr-2">{payload[0].name.toLowerCase()}:</span>
-                  <span className="num font-semibold" style={{ color: payload[0].payload.fill }}>{payload[0].value}</span>
+                  <span className="font-medium capitalize mr-2">{payload[0]?.name?.toString().toLowerCase()}:</span>
+                  <span className="num font-semibold" style={{ color: payload[0]?.payload?.fill }}>{payload[0]?.value}</span>
                 </div>
               );
             }
@@ -56,7 +56,7 @@ export function StatusChart({ data }: Props) {
           verticalAlign="bottom" 
           height={36} 
           iconType="circle" 
-          formatter={(value) => <span className="capitalize">{value.toLowerCase()}</span>}
+          formatter={(value) => <span className="capitalize">{String(value).toLowerCase()}</span>}
           wrapperStyle={{ fontSize: '11px', color: 'var(--color-muted-foreground)' }}
         />
       </PieChart>
