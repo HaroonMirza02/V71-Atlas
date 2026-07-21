@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSystemMetrics, useSignals } from '@/hooks/use-queries';
+import { stripHtml } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { StatCard } from '@/components/atlas/stat-card';
 import { SectionHeader } from '@/components/atlas/section-header';
@@ -114,7 +115,7 @@ export default function Dashboard() {
                         <span className="text-sm font-medium">{s.title || 'Untitled Signal'}</span>
                         <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] text-primary">{s.category}</span>
                      </div>
-                     <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{s.description}</p>
+                     <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{stripHtml(s.description)}</p>
                      <div className="mt-2 flex gap-2">
                         {s.technologies?.slice(0, 3).map((t: string) => <span key={t} className="text-[10px] text-muted-foreground border border-border rounded px-1.5">{t}</span>)}
                      </div>

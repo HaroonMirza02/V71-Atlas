@@ -3,6 +3,7 @@ import { useSignals } from '@/hooks/use-queries';
 import { TopNav } from '@/components/atlas/top-nav';
 import { PageHeader } from '@/components/atlas/section-header';
 import { OpportunityCard } from '@/components/atlas/opportunity-card';
+import { stripHtml } from '@/lib/utils';
 import { Loader2, Search, X } from 'lucide-react';
 
 export default function Signals() {
@@ -96,7 +97,7 @@ export default function Signals() {
                        </span>
                     </div>
                     <h3 className="mt-3 text-[15px] font-semibold leading-snug">{s.title}</h3>
-                    <p className="mt-2 text-[13px] text-muted-foreground line-clamp-3">{s.description || 'No description provided.'}</p>
+                    <p className="mt-2 text-[13px] text-muted-foreground line-clamp-3">{stripHtml(s.description) || 'No description provided.'}</p>
                   </div>
                   <div className="mt-5">
                     <div className="flex flex-wrap gap-1.5">
