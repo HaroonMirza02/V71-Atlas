@@ -85,20 +85,21 @@ export class ProductHuntConnector extends BaseConnector {
     }
 
     normalize(raw: RawRecord): NormalizedRecord {
-        const extId = String(raw.id);
-        const title = String(raw.name);
-        const description = `${raw.tagline} - ${raw.description || ''}`;
-        const itemUrl = String(raw.url);
-        const votes = Number(raw.votesCount || 0);
-        const author = raw.user ? raw.user.name : 'Unknown';
+        const data: any = raw;
+        const extId = String(data.id);
+        const title = String(data.name);
+        const description = `${data.tagline} - ${data.description || ''}`;
+        const itemUrl = String(data.url);
+        const votes = Number(data.votesCount || 0);
+        const author = data.user ? data.user.name : 'Unknown';
 
-        const rawTopics = raw.topics?.edges?.map((t: any) => t.node.name) || [];
+        const rawTopics = data.topics?.edges?.map((t: any) => t.node.name) || [];
         
         const category = this.inferCategory(`${title} ${description} ${rawTopics.join(' ')}`);
         const technologies = this.extractTechnologies(`${title} ${description}`);
         const tags = ['producthunt', 'startup', ...rawTopics];
 
-        const publishedAt = raw.createdAt ? new Date(raw.createdAt) : new Date();
+        const publishedAt = data.createdAt ? new Date(data.createdAt) : new Date();
 
         return {
             dedupHash: this.buildHash(extId),
