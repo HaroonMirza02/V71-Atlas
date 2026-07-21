@@ -5,8 +5,8 @@ import { StatCard } from '@/components/atlas/stat-card';
 import { SectionHeader } from '@/components/atlas/section-header';
 import { TopNav } from '@/components/atlas/top-nav';
 import { Loader2 } from 'lucide-react';
-import { TrendsChart } from '@/components/atlas/trends-chart'; // We will mock this temporarily or adapt it
-import { AlertsFeed } from '@/components/atlas/alerts-feed'; // Adapt this
+import { CategoryChart } from '@/components/atlas/category-chart';
+import { StatusChart } from '@/components/atlas/status-chart';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -72,6 +72,31 @@ export default function Dashboard() {
                 <StatCard label="Archived" value={metrics?.signals.byStatus?.['ARCHIVED'] || 0} />
               </>
             )}
+          </div>
+        </section>
+
+        <section className="grid gap-6 lg:grid-cols-2 mb-10">
+          <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card h-[300px] flex flex-col">
+            <SectionHeader
+              title="Signal Distribution"
+              description="Breakdown of ingested market signals by top categories"
+            />
+            <div className="flex-1 mt-2 min-h-0">
+              <CategoryChart data={metrics?.signals.byCategory || {}} />
+            </div>
+          </div>
+          <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card h-[300px] flex flex-col">
+            <SectionHeader
+              title="Pipeline Status"
+              description="Current breakdown of signals in the review pipeline"
+            />
+            <div className="flex-1 mt-2 min-h-0 relative">
+               <StatusChart data={metrics?.signals.byStatus || {}} />
+               <div className="absolute inset-0 pointer-events-none flex items-center justify-center flex-col">
+                 <span className="text-3xl font-semibold num">{metrics?.signals.totalSignals || 0}</span>
+                 <span className="text-xs text-muted-foreground">Total</span>
+               </div>
+            </div>
           </div>
         </section>
 
