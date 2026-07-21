@@ -53,12 +53,12 @@ export interface Signal {
   sourceId: string;
 }
 
-export function useSignals(params?: { category?: string; status?: string; limit?: number; search?: string }) {
+export function useSignals(params?: { category?: string; status?: string; limit?: number; search?: string; cursor?: string }) {
   return useQuery({
     queryKey: ['signals', params],
     queryFn: async () => {
       const { data } = await api.get('/signals', { params });
-      return data; // Returns { data: Signal[], pagination: ... }
+      return data as { data: Signal[]; pagination: { cursor?: string; hasMore: boolean; limit: number } };
     },
   });
 }

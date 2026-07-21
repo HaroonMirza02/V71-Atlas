@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSignals } from '@/hooks/use-queries';
 import { api } from '@/lib/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { TopNav } from '@/components/atlas/top-nav';
 import { PageHeader } from '@/components/atlas/section-header';
-import { OpportunityCard } from '@/components/atlas/opportunity-card';
 import { stripHtml } from '@/lib/utils';
-import { Loader2, Search, X } from 'lucide-react';
+import { Loader2, Search, X, ChevronLeft, ChevronRight, TrendingUp, Code2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 export default function Signals() {
   const [q, setQ] = useState('');
@@ -16,16 +16,26 @@ export default function Signals() {
   const [status, setStatus] = useState('');
   const [category, setCategory] = useState('');
   
+  // Pagination State
+  const [cursorHistory, setCursorHistory] = useState<string[]>([]);
+  const currentCursor = cursorHistory.length > 0 ? cursorHistory[cursorHistory.length - 1] : undefined;
+  
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQ(q), 500);
     return () => clearTimeout(timer);
   }, [q]);
 
-  const { data, isLoading } = useSignals({ 
+  // Reset pagination on filter change
+  useEffect(() => {
+    setCursorHistory([]);
+  }, [debouncedQ, status, category]);
+
+  const { data, isLoading, isFetching } = useSignals({ 
      limit: 20, 
      ...(status && { status }),
      ...(category && { category }),
-     ...(debouncedQ && { search: debouncedQ })
+     ...(debouncedQ && { search: debouncedQ }),
+     ...(currentCursor && { cursor: currentCursor })
   });
   
   const queryClient = useQueryClient();
@@ -48,18 +58,71 @@ export default function Signals() {
   };
   
   const signals = data?.data || [];
+  const pagination = data?.pagination;
+
+  const nextCursor = pagination?.cursor;
+  const hasMore = pagination?.hasMore || false;
+
+  const handleNextPage = () => {
+    if (nextCursor) {
+      setCursorHistory([...cursorHistory, nextCursor]);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (cursorHistory.length > 0) {
+      const newHistory = [...cursorHistory];
+      newHistory.pop();
+      setCursorHistory(newHistory);
+    }
+  };
+
+  // Compute Tech Stack KPIs
+  const topTechs = useMemo(() => {
+    if (!signals.length) return [];
+    const counts: Record<string, number> = {};
+    signals.forEach((s: any) => {
+      if (s.technologies && Array.isArray(s.technologies)) {
+        s.technologies.forEach((tech: string) => {
+          counts[tech] = (counts[tech] || 0) + 1;
+        });
+      }
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+  }, [signals]);
   
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <TopNav />
       <div className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-8 sm:px-6 lg:py-10 animate-in fade-in duration-300">
         <PageHeader
-          eyebrow={isLoading ? "Loading signals..." : `${signals.length} matching signals`}
+          eyebrow={isLoading ? "Loading signals..." : `Page ${cursorHistory.length + 1}`}
           title="Market Signals"
           description="Real-time, ingested opportunities ready for review and qualification."
         />
 
-        <div className="mt-6 flex flex-wrap items-center gap-2">
+        {/* Tech Stack KPI Banner */}
+        {topTechs.length > 0 && (
+          <div className="mt-6 flex items-center gap-4 rounded-xl border border-primary/20 bg-primary/5 p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+              <TrendingUp className="h-4 w-4" />
+              Top Tech In View:
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {topTechs.map(([tech, count]) => (
+                <div key={tech} className="flex items-center gap-1.5 rounded-full bg-background px-3 py-1 text-[11px] font-medium border border-border">
+                  <Code2 className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-foreground">{tech}</span>
+                  <span className="text-muted-foreground">({count})</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6 flex flex-wrap items-center gap-3">
           <div className="inline-flex h-9 min-w-[220px] flex-1 items-center gap-2 rounded-md border border-border px-3 text-[12px] sm:max-w-sm">
             <Search className="h-3.5 w-3.5 text-muted-foreground" />
             <input
@@ -108,6 +171,24 @@ export default function Signals() {
               <X className="h-3 w-3" /> Reset
             </button>
           )}
+
+          {/* Pagination Controls */}
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={handlePrevPage}
+              disabled={cursorHistory.length === 0 || isFetching}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background hover:bg-muted disabled:opacity-50 transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              onClick={handleNextPage}
+              disabled={!hasMore || isFetching}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background hover:bg-muted disabled:opacity-50 transition-colors"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -118,66 +199,109 @@ export default function Signals() {
           <div className="mx-auto mt-16 max-w-md text-center">
             <p className="text-xs font-medium text-muted-foreground">No matching signals</p>
             <h3 className="mt-2 text-lg font-semibold tracking-tight">Try a broader search</h3>
-            <button onClick={() => { setQ(''); setStatus(''); setCategory(''); }} className="mt-4 inline-flex h-8 items-center rounded-md bg-foreground px-3 text-[12px] text-background">
+            <button onClick={() => { setQ(''); setStatus(''); setCategory(''); }} className="mt-4 inline-flex h-8 items-center rounded-md bg-foreground px-3 text-[12px] text-background hover:bg-foreground/90 transition-colors">
               Reset filters
             </button>
           </div>
         ) : (
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-             {/* We adapt the OpportunityCard to take a Signal */}
-             {signals.map((s: any) => (
-                <div key={s._id} className="flex flex-col justify-between rounded-lg border border-border bg-card p-5 card-lift">
+          <>
+            <div className={`mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3 ${isFetching ? 'opacity-50 pointer-events-none' : ''}`}>
+              {signals.map((s: any) => (
+                <div key={s._id} className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-5 hover:border-primary/50 hover:shadow-md transition-all duration-300">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-primary/20 group-hover:bg-primary transition-colors" />
                   <div>
-                    <div className="flex items-center justify-between">
-                       <span className="text-[10px] uppercase font-bold text-muted-foreground">{s.sourceId}</span>
-                       <span className={`text-[10px] px-2 py-0.5 rounded-full ${s.status === 'PENDING' ? 'bg-warning/20 text-warning' : 'bg-success/20 text-success'}`}>
-                         {s.status}
-                       </span>
+                    <div className="flex items-center justify-between mb-3">
+                        <Badge variant="outline" className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase border-border bg-background">
+                          {s.sourceId}
+                        </Badge>
+                        <Badge variant="secondary" className={`text-[10px] uppercase font-bold tracking-wide ${s.status === 'PENDING' ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20' : s.status === 'REVIEWED' ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20' : 'bg-zinc-500/10 text-zinc-500 hover:bg-zinc-500/20'}`}>
+                          {s.status}
+                        </Badge>
                     </div>
-                    <h3 className="mt-3 text-[15px] font-semibold leading-snug">{s.title}</h3>
-                    <p className="mt-2 text-[13px] text-muted-foreground line-clamp-3">{stripHtml(s.description) || 'No description provided.'}</p>
+                    <h3 className="text-[16px] font-semibold leading-tight tracking-tight text-foreground line-clamp-2">
+                      {s.title}
+                    </h3>
+                    <p className="mt-2.5 text-[13px] leading-relaxed text-muted-foreground line-clamp-3">
+                      {stripHtml(s.description) || 'No details available.'}
+                    </p>
                   </div>
                   <div className="mt-5">
-                    <div className="flex flex-wrap gap-1.5">
-                      {s.technologies?.slice(0, 4).map((tech: string) => (
-                        <span key={tech} className="rounded bg-accent px-1.5 py-0.5 text-[10px] font-medium text-foreground">
-                          {tech}
+                    {/* Compulsory Tech Stack Section */}
+                    {s.technologies && s.technologies.length > 0 && (
+                      <div className="mb-4 space-y-1.5">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Tech Stack</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {s.technologies.slice(0, 5).map((tech: string) => (
+                            <Badge key={tech} variant="secondary" className="bg-primary/10 text-primary border-none text-[11px] font-semibold">
+                              {tech}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between border-t border-border pt-4">
+                        <span className="text-[11px] font-medium text-muted-foreground">
+                          {new Date(s.discoveredAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                         </span>
-                      ))}
+                        <a href={s.url} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-1">
+                          View Source <ChevronRight className="h-3 w-3" />
+                        </a>
                     </div>
-                    <div className="mt-3 flex items-center justify-between">
-                       <span className="text-[11px] text-muted-foreground">{new Date(s.discoveredAt).toLocaleDateString()}</span>
-                       <a href={s.url} target="_blank" rel="noreferrer" className="text-[11px] text-primary hover:underline">View Source</a>
-                    </div>
+
                     {s.status === 'PENDING' && (
-                       <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border/50 pt-3">
-                         <button 
-                           onClick={() => handleReview(s._id, 'REVIEWED')} 
-                           disabled={reviewMutation.isPending}
-                           className="rounded bg-primary/10 px-2 py-1.5 text-[11px] font-semibold text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
-                         >
-                           Qualify
-                         </button>
-                         <button 
-                           onClick={() => handleReview(s._id, 'ARCHIVED')} 
-                           disabled={reviewMutation.isPending}
-                           className="rounded bg-muted px-2 py-1.5 text-[11px] font-semibold text-muted-foreground hover:bg-muted/80 transition-colors disabled:opacity-50"
-                         >
-                           Archive
-                         </button>
-                         <button 
-                           onClick={() => handleReview(s._id, 'REJECTED')} 
-                           disabled={reviewMutation.isPending}
-                           className="rounded bg-destructive/10 px-2 py-1.5 text-[11px] font-semibold text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
-                         >
-                           Reject
-                         </button>
-                       </div>
+                        <div className="mt-4 grid grid-cols-3 gap-2">
+                          <button 
+                            onClick={() => handleReview(s._id, 'REVIEWED')} 
+                            disabled={reviewMutation.isPending}
+                            className="rounded-lg bg-primary px-2 py-2 text-[12px] font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                          >
+                            Qualify
+                          </button>
+                          <button 
+                            onClick={() => handleReview(s._id, 'ARCHIVED')} 
+                            disabled={reviewMutation.isPending}
+                            className="rounded-lg bg-accent px-2 py-2 text-[12px] font-semibold text-foreground hover:bg-accent/80 transition-colors disabled:opacity-50"
+                          >
+                            Archive
+                          </button>
+                          <button 
+                            onClick={() => handleReview(s._id, 'REJECTED')} 
+                            disabled={reviewMutation.isPending}
+                            className="rounded-lg bg-destructive/10 px-2 py-2 text-[12px] font-semibold text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
+                          >
+                            Reject
+                          </button>
+                        </div>
                     )}
                   </div>
                 </div>
-             ))}
-          </div>
+              ))}
+            </div>
+            
+            {/* Bottom Pagination */}
+            <div className="mt-8 flex items-center justify-between border-t border-border pt-4 pb-8">
+              <span className="text-sm text-muted-foreground">
+                Showing {signals.length} records
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrevPage}
+                  disabled={cursorHistory.length === 0 || isFetching}
+                  className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border bg-background px-4 text-sm font-medium hover:bg-muted disabled:opacity-50 transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" /> Previous
+                </button>
+                <button
+                  onClick={handleNextPage}
+                  disabled={!hasMore || isFetching}
+                  className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-border bg-background px-4 text-sm font-medium hover:bg-muted disabled:opacity-50 transition-colors"
+                >
+                  Next <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>
