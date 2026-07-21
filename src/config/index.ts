@@ -38,6 +38,11 @@ const envSchema = z.object({
 
     RSS_FEED_URLS: z.string().default('https://hnrss.org/newest?points=30,https://feeds.feedburner.com/TechCrunch,https://www.producthunt.com/feed,https://thenewstack.io/feed/,https://www.infoq.com/feed/'),
 
+    PRODUCT_HUNT_ENABLED: z.string().default('false').transform((v) => v === 'true'),
+    PRODUCT_HUNT_API_DEVELOPER_TOKEN: z.string().optional(),
+    PRODUCT_HUNT_API_CLIENT_TOKEN: z.string().optional(),
+    PRODUCT_HUNT_USER_CONTEXT: z.string().optional(),
+
     QUEUE_CONCURRENCY: z.string().default('5').transform(Number),
     QUEUE_MAX_RETRIES: z.string().default('3').transform(Number),
     QUEUE_RETRY_DELAY_MS: z.string().default('5000').transform(Number),

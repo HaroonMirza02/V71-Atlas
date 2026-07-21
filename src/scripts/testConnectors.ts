@@ -20,7 +20,7 @@ async function testConnectors() {
         }
 
         // 2. Fetch Test for Real Active Connectors
-        const activeIds = ['github', 'rss', 'remotive', 'hackernews'];
+        const activeIds = ['github', 'rss', 'remotive', 'hackernews', 'producthunt'];
         console.log('\n📥 Attempting to fetch a real batch from active connectors...');
 
         for (const sourceId of activeIds) {
