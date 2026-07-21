@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useSignals } from '@/hooks/use-queries';
+import { api } from '@/lib/api-client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { TopNav } from '@/components/atlas/top-nav';
 import { PageHeader } from '@/components/atlas/section-header';
 import { OpportunityCard } from '@/components/atlas/opportunity-card';
@@ -17,6 +19,25 @@ export default function Signals() {
      ...(status && { status }),
      ...(category && { category })
   });
+  
+  const queryClient = useQueryClient();
+  const reviewMutation = useMutation({
+    mutationFn: async ({ id, newStatus }: { id: string, newStatus: string }) => {
+      await api.post(`/signals/${id}/review`, { status: newStatus });
+    },
+    onSuccess: (_, variables) => {
+      toast.success(`Signal ${variables.newStatus === 'REVIEWED' ? 'qualified' : 'archived'}`);
+      queryClient.invalidateQueries({ queryKey: ['signals'] });
+      queryClient.invalidateQueries({ queryKey: ['metrics'] });
+    },
+    onError: () => {
+      toast.error('Failed to update signal status');
+    }
+  });
+
+  const handleReview = (id: string, newStatus: string) => {
+    reviewMutation.mutate({ id, newStatus });
+  };
   
   const signals = data?.data || [];
   
@@ -114,8 +135,20 @@ export default function Signals() {
                     </div>
                     {s.status === 'PENDING' && (
                        <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border/50 pt-3">
-                         <button onClick={() => toast.success('Signal qualified & moved to review pipeline')} className="rounded bg-primary/10 px-2 py-1.5 text-[11px] font-semibold text-primary hover:bg-primary/20 transition-colors">Qualify Lead</button>
-                         <button onClick={() => toast.success('Signal archived')} className="rounded bg-muted px-2 py-1.5 text-[11px] font-semibold text-muted-foreground hover:bg-muted/80 transition-colors">Archive</button>
+                         <button 
+                           onClick={() => handleReview(s._id, 'REVIEWED')} 
+                           disabled={reviewMutation.isPending}
+                           className="rounded bg-primary/10 px-2 py-1.5 text-[11px] font-semibold text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+                         >
+                           Qualify Lead
+                         </button>
+                         <button 
+                           onClick={() => handleReview(s._id, 'ARCHIVED')} 
+                           disabled={reviewMutation.isPending}
+                           className="rounded bg-muted px-2 py-1.5 text-[11px] font-semibold text-muted-foreground hover:bg-muted/80 transition-colors disabled:opacity-50"
+                         >
+                           Archive
+                         </button>
                        </div>
                     )}
                   </div>
