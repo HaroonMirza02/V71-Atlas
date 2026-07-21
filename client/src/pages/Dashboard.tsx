@@ -8,6 +8,7 @@ import { TopNav } from '@/components/atlas/top-nav';
 import { Loader2 } from 'lucide-react';
 import { CategoryChart } from '@/components/atlas/category-chart';
 import { StatusChart } from '@/components/atlas/status-chart';
+import { YieldChart } from '@/components/atlas/yield-chart';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -81,45 +82,11 @@ export default function Dashboard() {
             <section className="grid gap-6 lg:grid-cols-2 mb-10">
               <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card h-[300px] flex flex-col">
                 <SectionHeader
-                  title="Ingestion Queue Telemetry"
-                  description="Real-time status of background crawling jobs"
+                  title="Data Source Yields"
+                  description="Comparison of raw records fetched vs. qualified signals ingested"
                 />
-                <div className="flex-1 mt-4 min-h-0 flex flex-col justify-center space-y-4">
-                   <div className="grid grid-cols-2 gap-4 mb-2">
-                     <div className="rounded border border-border/50 bg-background/50 p-3 flex flex-col">
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Active Jobs</span>
-                        <span className="text-2xl font-bold text-primary num mt-1">{metrics?.queue.active || 0}</span>
-                     </div>
-                     <div className="rounded border border-border/50 bg-background/50 p-3 flex flex-col">
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Waiting</span>
-                        <span className="text-2xl font-bold text-foreground num mt-1">{metrics?.queue.waiting || 0}</span>
-                     </div>
-                   </div>
-                   
-                   <div>
-                     <div className="flex justify-between text-xs mb-2 text-muted-foreground">
-                        <span>Completed Yield</span>
-                        <span className="num font-medium text-success">{metrics?.queue.completed || 0}</span>
-                     </div>
-                     <div className="h-1.5 w-full bg-muted/30 rounded-full overflow-hidden">
-                        <div className="h-full bg-success" style={{ width: `${Math.min(((metrics?.queue.completed || 0) / Math.max((metrics?.queue.completed || 0) + (metrics?.queue.failed || 0), 1)) * 100, 100)}%` }}></div>
-                     </div>
-                   </div>
-                   
-                   <div>
-                     <div className="flex justify-between text-xs mb-2 text-muted-foreground">
-                        <span>Failed / Delayed</span>
-                        <span className="num font-medium text-destructive">{(metrics?.queue.failed || 0) + (metrics?.queue.delayed || 0)}</span>
-                     </div>
-                     <div className="h-1.5 w-full bg-muted/30 rounded-full overflow-hidden">
-                        <div className="h-full bg-destructive" style={{ width: `${Math.min((((metrics?.queue.failed || 0) + (metrics?.queue.delayed || 0)) / Math.max((metrics?.queue.completed || 0) + (metrics?.queue.failed || 0) + (metrics?.queue.delayed || 0), 1)) * 100, 100)}%` }}></div>
-                     </div>
-                   </div>
-
-                   <div className="flex justify-between text-xs pt-3 border-t border-border/50 mt-auto">
-                     <span className="text-muted-foreground">Redis Broker</span>
-                     <span className={`font-medium ${metrics?.redis.status === 'connected' ? 'text-success' : 'text-warning'}`}>{metrics?.redis.status?.toUpperCase()}</span>
-                   </div>
+                <div className="flex-1 mt-4 min-h-0">
+                   <YieldChart data={metrics?.connectors || []} />
                 </div>
               </div>
               <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card h-[300px] flex flex-col">
