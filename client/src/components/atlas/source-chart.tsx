@@ -40,9 +40,9 @@ export function SourceChart({ data }: Props) {
           data={chartData}
           cx="50%"
           cy="45%"
-          innerRadius={60}
-          outerRadius={80}
-          paddingAngle={2}
+          innerRadius="50%"
+          outerRadius="75%"
+          paddingAngle={5}
           dataKey="value"
           stroke="none"
         >
