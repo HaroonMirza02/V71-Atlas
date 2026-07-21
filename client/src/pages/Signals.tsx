@@ -43,13 +43,33 @@ export default function Signals() {
     mutationFn: async ({ id, newStatus }: { id: string, newStatus: string }) => {
       await api.put(`/signals/${id}/review`, { status: newStatus });
     },
+    onMutate: async ({ id, newStatus }) => {
+      await queryClient.cancelQueries({ queryKey: ['signals'] });
+      const previousQueries = queryClient.getQueriesData({ queryKey: ['signals'] });
+      
+      queryClient.setQueriesData({ queryKey: ['signals'] }, (old: any) => {
+        if (!old || !old.data) return old;
+        return {
+          ...old,
+          data: old.data.map((s: any) => s._id === id ? { ...s, status: newStatus } : s)
+        };
+      });
+      return { previousQueries };
+    },
     onSuccess: (_, variables) => {
-      toast.success(`Signal ${variables.newStatus === 'REVIEWED' ? 'qualified' : 'archived'}`);
+      toast.success(`Signal ${variables.newStatus === 'REVIEWED' ? 'qualified' : variables.newStatus === 'REJECTED' ? 'rejected' : 'archived'}`);
+    },
+    onError: (err, variables, context: any) => {
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(([queryKey, data]: any) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      toast.error('Failed to update signal status');
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['signals'] });
       queryClient.invalidateQueries({ queryKey: ['metrics'] });
-    },
-    onError: () => {
-      toast.error('Failed to update signal status');
     }
   });
 
@@ -207,8 +227,7 @@ export default function Signals() {
           <>
             <div className={`mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3 ${isFetching ? 'opacity-50 pointer-events-none' : ''}`}>
               {signals.map((s: any) => (
-                <div key={s._id} className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-5 hover:border-primary/50 hover:shadow-md transition-all duration-300">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-primary/20 group-hover:bg-primary transition-colors" />
+                <div key={s._id} className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-5 hover:border-muted-foreground/20 hover:shadow-sm transition-all duration-300">
                   <div>
                     <div className="flex items-center justify-between mb-3">
                         <Badge variant="outline" className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase border-border bg-background">

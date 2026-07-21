@@ -62,7 +62,7 @@ export async function invalidateCache(key: string): Promise<void> {
 export async function invalidateCachePattern(pattern: string): Promise<void> {
     try {
         const redis = getRedisClient();
-        const keys = await redis.keys(`atlas:${pattern}:*`);
+        const keys = await redis.keys(`atlas:*${pattern}*`);
         if (keys.length > 0) {
             await redis.del(...keys);
             logger.debug('Cache pattern invalidated', { pattern, count: keys.length });

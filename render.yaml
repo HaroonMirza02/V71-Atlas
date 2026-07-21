@@ -9,13 +9,13 @@ services:
       - key: NODE_ENV
         value: production
       # Automatically connect the backend to the managed Redis instance below
-      - key: REDIS_URL
+      - key: REDIS_URI
         fromService:
           type: redis
           name: atlas-redis
           property: connectionString
       # You will need to manually set these in the Render dashboard
-      - key: MONGO_URI
+      - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
         sync: false
