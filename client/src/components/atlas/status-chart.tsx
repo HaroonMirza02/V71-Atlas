@@ -31,6 +31,7 @@ export function StatusChart({ data }: Props) {
           innerRadius="50%"
           outerRadius="75%"
           paddingAngle={4}
+          minAngle={15}
           dataKey="value"
           stroke="none"
         >
