@@ -134,13 +134,13 @@ export default function Signals() {
                        <a href={s.url} target="_blank" rel="noreferrer" className="text-[11px] text-primary hover:underline">View Source</a>
                     </div>
                     {s.status === 'PENDING' && (
-                       <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border/50 pt-3">
+                       <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border/50 pt-3">
                          <button 
                            onClick={() => handleReview(s._id, 'REVIEWED')} 
                            disabled={reviewMutation.isPending}
                            className="rounded bg-primary/10 px-2 py-1.5 text-[11px] font-semibold text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
                          >
-                           Qualify Lead
+                           Qualify
                          </button>
                          <button 
                            onClick={() => handleReview(s._id, 'ARCHIVED')} 
@@ -148,6 +148,13 @@ export default function Signals() {
                            className="rounded bg-muted px-2 py-1.5 text-[11px] font-semibold text-muted-foreground hover:bg-muted/80 transition-colors disabled:opacity-50"
                          >
                            Archive
+                         </button>
+                         <button 
+                           onClick={() => handleReview(s._id, 'REJECTED')} 
+                           disabled={reviewMutation.isPending}
+                           className="rounded bg-destructive/10 px-2 py-1.5 text-[11px] font-semibold text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
+                         >
+                           Reject
                          </button>
                        </div>
                     )}
