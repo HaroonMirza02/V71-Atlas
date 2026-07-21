@@ -35,7 +35,7 @@ async function bootstrap() {
 
         // 6. Bind Express Listener
         const PORT = config.PORT || 5000;
-        serverInstance = app.listen(PORT, () => {
+        serverInstance = app.listen(PORT as number, '0.0.0.0', () => {
             logger.info(`🚀 Project Atlas REST API server running on port ${PORT}`, {
                 env: config.NODE_ENV,
                 version: '1.0.0',
