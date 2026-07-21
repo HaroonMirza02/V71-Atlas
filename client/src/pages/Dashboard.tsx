@@ -8,7 +8,7 @@ import { TopNav } from '@/components/atlas/top-nav';
 import { Loader2 } from 'lucide-react';
 import { CategoryChart } from '@/components/atlas/category-chart';
 import { StatusChart } from '@/components/atlas/status-chart';
-import { YieldChart } from '@/components/atlas/yield-chart';
+import { SourceChart } from '@/components/atlas/source-chart';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -93,11 +93,11 @@ export default function Dashboard() {
             <section className="grid gap-6 lg:grid-cols-2 mb-10">
               <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card h-[300px] flex flex-col">
                 <SectionHeader
-                  title="Signal Distribution"
-                  description="Breakdown of ingested market signals by top categories"
+                  title="Ingestion by Source"
+                  description="Volume of signals pulled by each active connector"
                 />
                 <div className="flex-1 mt-2 min-h-0">
-                  <CategoryChart data={metrics?.signals.byCategory || {}} />
+                  <SourceChart data={metrics?.connectors || []} />
                 </div>
               </div>
               <div className="rounded-lg border border-border p-4 sm:p-5 card-lift bg-card h-[300px] flex flex-col">
