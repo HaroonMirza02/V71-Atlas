@@ -1,0 +1,26 @@
+services:
+  # The full-stack Node.js server (serves the React frontend from the /dist folder)
+  - type: web
+    name: atlas-intelligence
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Automatically connect the backend to the managed Redis instance below
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: atlas-redis
+          property: connectionString
+      # You will need to manually set these in the Render dashboard
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+
+  # Managed Redis database for BullMQ background workers
+  - type: redis
+    name: atlas-redis
+    plan: free
