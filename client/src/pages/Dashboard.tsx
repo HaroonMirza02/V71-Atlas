@@ -60,18 +60,27 @@ export default function Dashboard() {
           </div>
 
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-            <StatCard label="Total Signals" value={metrics?.signals.totalSignals || 0} />
-            <StatCard label="Pending Review" value={metrics?.signals.byStatus?.['PENDING'] || 0} />
-            <StatCard label="Active Connectors" value={metrics?.connectors.filter(c => c.isEnabled).length || 0} />
+            <StatCard label="Total Signals" value={metrics?.signals.totalSignals || 0} hint="All ingested records" />
+            <StatCard label="Pending Review" value={metrics?.signals.byStatus?.['PENDING'] || 0} hint="Awaiting qualification" />
+            <StatCard label="Active Connectors" value={metrics?.connectors.filter(c => c.isEnabled).length || 0} hint="Data sources running" />
             {isAdmin ? (
               <>
-                <StatCard label="Queue Waiting" value={metrics?.queue.waiting || 0} />
-                <StatCard label="Uptime (hrs)" value={Math.floor((metrics?.system.uptimeSeconds || 0) / 3600)} />
+                <StatCard label="Queue Backlog" value={metrics?.queue.waiting || 0} hint="Pending background jobs" />
+                <StatCard 
+                  label="System Uptime" 
+                  value={metrics?.system.uptimeSeconds || 0} 
+                  hint="Continuous server health"
+                  format={(v) => {
+                    const h = Math.floor(v / 3600);
+                    const m = Math.floor((v % 3600) / 60);
+                    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+                  }}
+                />
               </>
             ) : (
               <>
-                <StatCard label="Qualified" value={metrics?.signals.byStatus?.['REVIEWED'] || 0} />
-                <StatCard label="Archived" value={metrics?.signals.byStatus?.['ARCHIVED'] || 0} />
+                <StatCard label="Qualified" value={metrics?.signals.byStatus?.['REVIEWED'] || 0} hint="Moved to CRM" />
+                <StatCard label="Archived" value={metrics?.signals.byStatus?.['ARCHIVED'] || 0} hint="Muted or irrelevant" />
               </>
             )}
           </div>
