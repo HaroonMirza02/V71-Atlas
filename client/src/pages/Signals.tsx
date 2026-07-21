@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/atlas/section-header';
 import { OpportunityCard } from '@/components/atlas/opportunity-card';
 import { stripHtml } from '@/lib/utils';
 import { Loader2, Search, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Signals() {
   const [q, setQ] = useState('');
@@ -107,10 +108,16 @@ export default function Signals() {
                         </span>
                       ))}
                     </div>
-                    <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-3">
+                    <div className="mt-3 flex items-center justify-between">
                        <span className="text-[11px] text-muted-foreground">{new Date(s.discoveredAt).toLocaleDateString()}</span>
                        <a href={s.url} target="_blank" rel="noreferrer" className="text-[11px] text-primary hover:underline">View Source</a>
                     </div>
+                    {s.status === 'PENDING' && (
+                       <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border/50 pt-3">
+                         <button onClick={() => toast.success('Signal qualified & moved to review pipeline')} className="rounded bg-primary/10 px-2 py-1.5 text-[11px] font-semibold text-primary hover:bg-primary/20 transition-colors">Qualify Lead</button>
+                         <button onClick={() => toast.success('Signal archived')} className="rounded bg-muted px-2 py-1.5 text-[11px] font-semibold text-muted-foreground hover:bg-muted/80 transition-colors">Archive</button>
+                       </div>
+                    )}
                   </div>
                 </div>
              ))}
