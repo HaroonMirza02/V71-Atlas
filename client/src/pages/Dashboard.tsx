@@ -127,12 +127,8 @@ export default function Dashboard() {
                   title="Pipeline Status"
                   description="Current breakdown of signals in the review pipeline"
                 />
-                <div className="flex-1 mt-2 min-h-0 relative">
+                <div className="flex-1 mt-2 min-h-0">
                    <StatusChart data={metrics?.signals.byStatus || {}} />
-                   <div className="absolute inset-0 pointer-events-none flex items-center justify-center flex-col">
-                     <span className="text-3xl font-semibold num">{metrics?.signals.totalSignals || 0}</span>
-                     <span className="text-xs text-muted-foreground">Total</span>
-                   </div>
                 </div>
               </div>
             </section>
