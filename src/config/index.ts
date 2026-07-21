@@ -58,6 +58,10 @@ const envSchema = z.object({
 });
 
 function loadConfig() {
+    // Render injects REDIS_URL from its managed Redis blueprint, but we expect REDIS_URI
+    if (process.env.REDIS_URL && !process.env.REDIS_URI) {
+        process.env.REDIS_URI = process.env.REDIS_URL;
+    }
     const result = envSchema.safeParse(process.env);
     if (!result.success) {
         console.error('❌ Invalid environment configuration:');
