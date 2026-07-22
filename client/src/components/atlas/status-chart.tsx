@@ -13,10 +13,16 @@ export function StatusChart({ data }: Props) {
   const archived = data['ARCHIVED'] || 0;
   const rejected = data['REJECTED'] || 0;
 
+  const triagedTotal = reviewed + archived + rejected;
+  const processedPct = total > 0 ? (triagedTotal / total) * 100 : 0;
   const reviewedPct = total > 0 ? (reviewed / total) * 100 : 0;
-  const pendingPct = total > 0 ? (pending / total) * 100 : 0;
   const archivedPct = total > 0 ? (archived / total) * 100 : 0;
   const rejectedPct = total > 0 ? (rejected / total) * 100 : 0;
+
+  const formatPct = (val: number) => {
+    if (val > 0 && val < 0.1) return '< 0.1';
+    return val.toFixed(1);
+  };
 
   return (
     <div className="flex flex-col justify-center h-full w-full space-y-5 px-1 font-sans">
@@ -24,46 +30,47 @@ export function StatusChart({ data }: Props) {
       <div className="flex items-center justify-between">
         <div>
           <span className="text-2xl font-semibold tracking-tight text-foreground num">
-            {reviewedPct.toFixed(1)}%
+            {formatPct(processedPct)}%
           </span>
-          <span className="text-xs text-muted-foreground block">Signals Reviewed & Qualified</span>
+          <span className="text-xs text-muted-foreground block font-medium">Pipeline Triage Complete</span>
         </div>
         <div className="text-right">
-          <span className="text-sm font-semibold text-rose-600 num">
+          <span className="text-sm font-semibold text-blue-600 num">
             {pending.toLocaleString()}
           </span>
-          <span className="text-xs text-muted-foreground block font-medium">Awaiting Triage</span>
+          <span className="text-xs text-muted-foreground block font-medium">Pending Triage ({formatPct(total > 0 ? (pending / total) * 100 : 0)}%)</span>
         </div>
       </div>
 
-      {/* High-Contrast Stacked Progress Bar */}
+      {/* Triaged Completion Progress Bar */}
       <div className="space-y-1.5">
         <div className="flex h-3.5 w-full overflow-hidden rounded-full bg-secondary border border-border/80">
-          <div 
-            style={{ width: `${Math.max(reviewedPct, reviewed > 0 ? 2 : 0)}%` }} 
-            className="bg-emerald-600 transition-all duration-300"
-            title={`Reviewed: ${reviewed.toLocaleString()} (${reviewedPct.toFixed(1)}%)`}
-          />
-          <div 
-            style={{ width: `${pendingPct}%` }} 
-            className="bg-blue-600 transition-all duration-300"
-            title={`Pending: ${pending.toLocaleString()} (${pendingPct.toFixed(1)}%)`}
-          />
-          <div 
-            style={{ width: `${archivedPct}%` }} 
-            className="bg-slate-400 transition-all duration-300"
-            title={`Archived: ${archived.toLocaleString()} (${archivedPct.toFixed(1)}%)`}
-          />
-          <div 
-            style={{ width: `${rejectedPct}%` }} 
-            className="bg-rose-500 transition-all duration-300"
-            title={`Rejected: ${rejected.toLocaleString()} (${rejectedPct.toFixed(1)}%)`}
-          />
+          {reviewed > 0 && (
+            <div 
+              style={{ width: `${Math.max(reviewedPct, 1)}%` }} 
+              className="bg-emerald-600 transition-all duration-300"
+              title={`Reviewed: ${reviewed.toLocaleString()} (${formatPct(reviewedPct)}%)`}
+            />
+          )}
+          {archived > 0 && (
+            <div 
+              style={{ width: `${Math.max(archivedPct, 1)}%` }} 
+              className="bg-slate-400 transition-all duration-300"
+              title={`Archived: ${archived.toLocaleString()} (${formatPct(archivedPct)}%)`}
+            />
+          )}
+          {rejected > 0 && (
+            <div 
+              style={{ width: `${Math.max(rejectedPct, 1)}%` }} 
+              className="bg-rose-500 transition-all duration-300"
+              title={`Rejected: ${rejected.toLocaleString()} (${formatPct(rejectedPct)}%)`}
+            />
+          )}
         </div>
 
         <div className="flex justify-between text-[11px] text-muted-foreground">
           <span>0%</span>
-          <span>Pipeline Progress</span>
+          <span className="font-medium text-foreground">{triagedTotal.toLocaleString()} of {total.toLocaleString()} signals processed</span>
           <span>100%</span>
         </div>
       </div>
