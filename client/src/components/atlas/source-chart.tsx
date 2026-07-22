@@ -23,15 +23,17 @@ export function SourceChart({ data }: Props) {
     return <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground font-sans">No connector metrics available</div>;
   }
 
-  // 1. Live connectors only (exclude stubs)
-  const liveConnectors = data.filter(
-    (c) => !c.connectorId.toLowerCase().includes("stub")
-  );
+  // 1. Live connectors (GitHub, RSS, Remotive, Hacker News, Product Hunt)
+  const liveConnectors = data.filter((c) => {
+    const id = c.connectorId.toLowerCase();
+    return !id.includes("stub") || id === "producthunt";
+  });
 
-  // 2. Stub connectors (Awaiting credentials)
-  const stubConnectors = data.filter(
-    (c) => c.connectorId.toLowerCase().includes("stub")
-  );
+  // 2. Stub connectors awaiting credentials (Upwork, LinkedIn, Freelancer) - excluding any producthunt-stub
+  const stubConnectors = data.filter((c) => {
+    const id = c.connectorId.toLowerCase();
+    return id.includes("stub") && !id.includes("producthunt");
+  });
 
   const chartData = liveConnectors
     .map((c) => ({

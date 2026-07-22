@@ -73,18 +73,53 @@ export abstract class BaseConnector implements SourceConnector {
         return 'OTHER';
     }
 
-    /** Extract technology keywords from text */
+    /** Extract technology keywords from text with strict regex word boundaries */
     protected extractTechnologies(text: string): string[] {
-        const techs = [
-            'React', 'Node.js', 'Python', 'TypeScript', 'JavaScript',
-            'Go', 'Rust', 'Java', 'Kubernetes', 'Docker', 'AWS', 'GCP',
-            'Azure', 'GraphQL', 'PostgreSQL', 'MongoDB', 'Redis', 'Kafka',
-            'gRPC', 'Next.js', 'Vue', 'Angular', 'FastAPI', 'Flask',
-            'Django', 'Ruby on Rails', 'Terraform', 'Ansible', 'Linux',
-            'OpenAI', 'LLM', 'GPT', 'Claude', 'Gemini', 'Langchain',
+        if (!text) return [];
+
+        const TECH_RULES: Array<{ name: string; pattern: RegExp }> = [
+            { name: 'React', pattern: /\b(react|react\.js|reactjs|react\s+native)\b/i },
+            { name: 'Node.js', pattern: /\b(node|node\.js|nodejs|express\.js)\b/i },
+            { name: 'Python', pattern: /\b(python|python3|pytest)\b/i },
+            { name: 'TypeScript', pattern: /\b(typescript)\b/i },
+            { name: 'JavaScript', pattern: /\b(javascript|ecmascript|es6)\b/i },
+            { name: 'Golang', pattern: /\b(golang|golang\s+developer|go\s+backend|go\s+microservices|built\s+with\s+go|written\s+in\s+go|go\s+programming)\b/i },
+            { name: 'Rust', pattern: /\b(rust|rustlang)\b/i },
+            { name: 'Java', pattern: /\b(java|spring\s+boot|springframework)\b/i },
+            { name: 'C++', pattern: /\b(c\+\+|cpp)\b/i },
+            { name: 'C#', pattern: /\b(c#|\.net|dotnet|asp\.net)\b/i },
+            { name: 'PHP', pattern: /\b(php|laravel|symfony|wordpress)\b/i },
+            { name: 'Ruby', pattern: /\b(ruby|rails|ruby\s+on\s+rails)\b/i },
+            { name: 'Kubernetes', pattern: /\b(kubernetes|k8s|helm)\b/i },
+            { name: 'Docker', pattern: /\b(docker|dockerfile|containerization)\b/i },
+            { name: 'AWS', pattern: /\b(aws|amazon\s+web\s+services|ec2|s3|lambda|dynamodb)\b/i },
+            { name: 'GCP', pattern: /\b(gcp|google\s+cloud|cloud\s+run)\b/i },
+            { name: 'Azure', pattern: /\b(azure|microsoft\s+azure)\b/i },
+            { name: 'GraphQL', pattern: /\b(graphql|apollo)\b/i },
+            { name: 'PostgreSQL', pattern: /\b(postgres|postgresql|psql)\b/i },
+            { name: 'MongoDB', pattern: /\b(mongodb|mongoose)\b/i },
+            { name: 'Redis', pattern: /\b(redis|ioredis)\b/i },
+            { name: 'Kafka', pattern: /\b(kafka|apache\s+kafka)\b/i },
+            { name: 'gRPC', pattern: /\b(grpc)\b/i },
+            { name: 'Next.js', pattern: /\b(next\.js|nextjs)\b/i },
+            { name: 'Vue.js', pattern: /\b(vue|vue\.js|vuejs|nuxt)\b/i },
+            { name: 'Angular', pattern: /\b(angular|angularjs)\b/i },
+            { name: 'FastAPI', pattern: /\b(fastapi)\b/i },
+            { name: 'Flask', pattern: /\b(flask)\b/i },
+            { name: 'Django', pattern: /\b(django)\b/i },
+            { name: 'Terraform', pattern: /\b(terraform)\b/i },
+            { name: 'Ansible', pattern: /\b(ansible)\b/i },
+            { name: 'Linux', pattern: /\b(linux|ubuntu|debian|centos)\b/i },
+            { name: 'OpenAI / LLM', pattern: /\b(openai|llm|gpt-?4|claude|gemini|langchain|ollama|vector\s+db)\b/i },
         ];
-        const lower = text.toLowerCase();
-        return techs.filter((t) => lower.includes(t.toLowerCase()));
+
+        const matches: string[] = [];
+        for (const rule of TECH_RULES) {
+            if (rule.pattern.test(text)) {
+                matches.push(rule.name);
+            }
+        }
+        return matches;
     }
 
     /** Safely truncate long strings */

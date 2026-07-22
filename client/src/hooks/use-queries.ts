@@ -4,6 +4,22 @@ import { api } from '@/lib/api-client';
 export interface SystemMetrics {
   signals: {
     totalSignals: number;
+    ingestedToday?: number;
+    ingestedThisWeek?: number;
+    qualifiedThisWeek?: number;
+    topCategoryThisWeek?: {
+      category: string;
+      count: number;
+      percentage: number;
+    } | null;
+    dailyVolume?: Array<{
+      date: string;
+      count: number;
+    }>;
+    topTechnologies?: Array<{
+      technology: string;
+      count: number;
+    }>;
     byStatus: Record<string, number>;
     byCategory: Record<string, number>;
   };

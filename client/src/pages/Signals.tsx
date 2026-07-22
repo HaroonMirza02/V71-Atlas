@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSignals } from '@/hooks/use-queries';
+import { useSignals, useSystemMetrics } from '@/hooks/use-queries';
 import { api } from '@/lib/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { TopNav } from '@/components/atlas/top-nav';
 import { PageHeader } from '@/components/atlas/section-header';
 import { CATEGORY_LABELS } from '@/components/atlas/category-chart';
-import { stripHtml } from '@/lib/utils';
+import { stripHtml, sanitizeTechTag } from '@/lib/utils';
 import { Search, X, ChevronLeft, ChevronRight, TrendingUp, Code2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -45,6 +45,8 @@ export default function Signals() {
     setCursorHistory([]);
   }, [debouncedQ, status, category]);
 
+  const { data: metrics } = useSystemMetrics();
+
   const { data, isLoading, isFetching, isError, refetch } = useSignals({ 
      limit: 20, 
      ...(status && { status }),
@@ -52,6 +54,35 @@ export default function Signals() {
      ...(debouncedQ && { search: debouncedQ }),
      ...(currentCursor && { cursor: currentCursor })
   });
+
+  // Stable global top technologies calculation (does not flicker on pagination page change)
+  const topTechs = useMemo(() => {
+    if (metrics?.signals?.topTechnologies && metrics.signals.topTechnologies.length > 0) {
+      return metrics.signals.topTechnologies
+        .map((t: any) => {
+          const sanitized = sanitizeTechTag(t.technology);
+          return sanitized ? [sanitized, t.count] as [string, number] : null;
+        })
+        .filter(Boolean)
+        .slice(0, 5) as Array<[string, number]>;
+    }
+    const signals = data?.data || [];
+    if (!signals || !signals.length) return [];
+    const counts: Record<string, number> = {};
+    signals.forEach((s: any) => {
+      if (s.technologies && Array.isArray(s.technologies)) {
+        s.technologies.forEach((tech: string) => {
+          const sanitized = sanitizeTechTag(tech);
+          if (sanitized) {
+            counts[sanitized] = (counts[sanitized] || 0) + 1;
+          }
+        });
+      }
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+  }, [metrics, data]);
   
   const queryClient = useQueryClient();
   const reviewMutation = useMutation({
@@ -110,22 +141,6 @@ export default function Signals() {
       setCursorHistory(newHistory);
     }
   };
-
-  // Memoize top technologies calculation
-  const topTechs = useMemo(() => {
-    if (!signals.length) return [];
-    const counts: Record<string, number> = {};
-    signals.forEach((s: any) => {
-      if (s.technologies && Array.isArray(s.technologies)) {
-        s.technologies.forEach((tech: string) => {
-          counts[tech] = (counts[tech] || 0) + 1;
-        });
-      }
-    });
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
-  }, [signals]);
   
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
@@ -309,11 +324,11 @@ export default function Signals() {
 
                   <div className="mt-5 pt-3 border-t border-border/60">
                     {/* Tech Stack Section */}
-                    {s.technologies && s.technologies.length > 0 && (
+                    {s.technologies && s.technologies.filter(sanitizeTechTag).length > 0 && (
                       <div className="mb-3 space-y-1">
                         <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Tech Stack</span>
                         <div className="flex flex-wrap gap-1">
-                          {s.technologies.slice(0, 5).map((tech: string) => (
+                          {s.technologies.map(sanitizeTechTag).filter(Boolean).slice(0, 5).map((tech: any) => (
                             <span key={tech} className="bg-secondary text-foreground text-[10px] font-medium border border-border rounded px-1.5 py-0.5">
                               {tech}
                             </span>
