@@ -360,33 +360,43 @@ export default function Dashboard() {
 
             {/* Analyst Action Required Panel & Recent Market Signals Feed */}
             <section className="grid gap-6 lg:grid-cols-[1fr_2fr]">
-              {/* Action Required Panel */}
-              <div className="rounded-xl border border-border bg-white p-5 shadow-xs">
-                <SectionHeader
-                  title="Action Required"
-                  action={
-                    <Link to="/signals" className="text-xs text-muted-foreground hover:text-foreground font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded px-1">
-                      View all
-                    </Link>
-                  }
-                />
-                <div className="mt-4 space-y-2.5">
-                   {alerts.slice(0, 5).map((s: any) => (
-                    <div key={s._id} className="rounded-lg border border-border p-3 hover:border-border/80 transition-colors">
-                      <div className="flex items-center gap-2">
-                         <div className="h-2 w-2 rounded-full bg-blue-600 shrink-0" />
-                         <span className="text-xs font-semibold text-foreground truncate">
-                           {s.company || 'Market Opportunity'}
-                         </span>
+              {/* Action Required / Pending Triage Queue Panel */}
+              <div className="rounded-xl border border-border bg-white p-5 shadow-xs flex flex-col justify-between">
+                <div>
+                  <SectionHeader
+                    title="Action Required"
+                    description="Pending signals awaiting analyst triage"
+                    action={
+                      <Link to="/signals?status=PENDING" className="text-xs text-blue-600 hover:text-blue-700 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded px-1">
+                        View queue &rarr;
+                      </Link>
+                    }
+                  />
+                  <div className="mt-4 space-y-2.5">
+                     {alerts.slice(0, 5).map((s: any) => (
+                      <div key={s._id} className="rounded-lg border border-border p-3 hover:border-border/80 transition-colors bg-blue-50/20">
+                        <div className="flex items-center justify-between gap-2">
+                           <div className="flex items-center gap-1.5 min-w-0">
+                              <div className="h-2 w-2 rounded-full bg-blue-600 shrink-0" />
+                              <span className="text-[10px] font-mono text-muted-foreground uppercase shrink-0">{s.sourceId}</span>
+                              <span className="rounded bg-secondary px-1.5 py-0.2 text-[10px] font-medium text-foreground border border-border truncate font-mono">
+                                {CATEGORY_LABELS[s.category] || s.category}
+                              </span>
+                           </div>
+                           <Link to="/signals?status=PENDING" className="text-[11px] text-blue-600 hover:underline font-medium shrink-0">
+                             Review &rarr;
+                           </Link>
+                        </div>
+                        <h4 className="mt-1.5 text-xs font-semibold text-foreground line-clamp-1">{s.title || 'Untitled Signal'}</h4>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">{stripHtml(s.description)}</p>
                       </div>
-                      <p className="mt-1 text-xs text-muted-foreground line-clamp-2 leading-relaxed">{s.title}</p>
-                    </div>
-                  ))}
-                   {alerts.length === 0 && (
-                     <div className="p-8 text-center text-xs text-muted-foreground">
-                       No pending triage alerts.
-                     </div>
-                   )}
+                    ))}
+                     {alerts.length === 0 && (
+                       <div className="p-8 text-center text-xs text-muted-foreground">
+                         No pending triage signals in queue.
+                       </div>
+                     )}
+                  </div>
                 </div>
               </div>
 
