@@ -106,9 +106,16 @@ export default function Dashboard() {
   const liveConnectors = connectors.filter(c => !c.connectorId.toLowerCase().includes('stub'));
   const totalFetched = liveConnectors.reduce((acc, c) => acc + (c.fetched || 0), 0);
   const totalErrors = liveConnectors.reduce((acc, c) => acc + (c.consecutiveErrors || 0), 0);
-  const overallErrorRatePct = (totalFetched + totalErrors) > 0 
-    ? Math.round((totalErrors / (totalFetched + totalErrors)) * 100) 
-    : 0;
+
+  const totalFailures = totalErrors + failedJobsCount;
+  const totalAttempts = totalFetched + (metrics?.queue?.completed || 0) + totalFailures;
+  const rawErrorRate = totalAttempts > 0 ? (totalFailures / totalAttempts) * 100 : 0;
+  
+  const formattedErrorRate = rawErrorRate === 0 
+    ? '0%' 
+    : rawErrorRate < 0.1 
+    ? `${rawErrorRate.toFixed(2)}%` 
+    : `${rawErrorRate.toFixed(1)}%`;
 
   // Compute Analyst Metrics
   const topCategoryObj = metrics?.signals?.topCategoryThisWeek;
@@ -177,10 +184,12 @@ export default function Dashboard() {
               </div>
               <div className="group rounded-xl border border-border bg-white p-4 shadow-xs hover:border-border/80 transition-all sm:p-5">
                 <p className="text-xs font-medium text-muted-foreground font-sans">Overall Error Rate</p>
-                <div className={`mt-3 text-2xl font-semibold tracking-tight sm:text-3xl num ${overallErrorRatePct > 15 ? 'text-rose-600 font-bold' : 'text-foreground'}`}>
-                  {overallErrorRatePct}%
+                <div className={`mt-3 text-2xl font-semibold tracking-tight sm:text-3xl num ${rawErrorRate > 15 ? 'text-rose-600 font-bold' : rawErrorRate > 0 ? 'text-rose-700' : 'text-foreground'}`}>
+                  {formattedErrorRate}
                 </div>
-                <p className="mt-1.5 text-[11px] text-muted-foreground font-sans">Fetch failure percentage</p>
+                <p className="mt-1.5 text-[11px] text-muted-foreground font-sans">
+                  {totalFailures > 0 ? `${totalFailures} failures across ${totalAttempts > 1000 ? (totalAttempts / 1000).toFixed(1) + 'k' : totalAttempts} ops` : 'Fetch & queue failure rate'}
+                </p>
               </div>
             </div>
           ) : (
