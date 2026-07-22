@@ -9,10 +9,13 @@ export interface SystemMetrics {
   };
   connectors: Array<{
     connectorId: string;
+    displayName?: string;
     isEnabled: boolean;
     fetched: number;
     ingested: number;
     consecutiveErrors: number;
+    lastSuccessAt?: string;
+    lastRunAt?: string;
   }>;
   queue: {
     waiting: number;

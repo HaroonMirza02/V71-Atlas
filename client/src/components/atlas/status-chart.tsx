@@ -4,16 +4,16 @@ interface Props {
   data: Record<string, number>;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  PENDING: "var(--color-primary)",
-  REVIEWED: "#10b981", // success green
-  REJECTED: "#ef4444", // destructive red
-  ARCHIVED: "#64748b", // muted slate
+const LIGHT_STATUS_COLORS: Record<string, string> = {
+  PENDING: "#2563eb",  // Clean blue
+  REVIEWED: "#059669", // Emerald green
+  REJECTED: "#dc2626", // Clean red
+  ARCHIVED: "#64748b", // Muted slate
 };
 
 export function StatusChart({ data }: Props) {
   if (!data || Object.keys(data).length === 0) {
-    return <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">No data available</div>;
+    return <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground font-sans">No pipeline status data available</div>;
   }
 
   const chartData = Object.entries(data).map(([key, value]) => ({
@@ -27,25 +27,26 @@ export function StatusChart({ data }: Props) {
         <Pie
           data={chartData}
           cx="50%"
-          cy="45%"
-          innerRadius="50%"
-          outerRadius="75%"
+          cy="42%"
+          innerRadius="48%"
+          outerRadius="72%"
           paddingAngle={4}
           minAngle={15}
           dataKey="value"
-          stroke="none"
+          stroke="#ffffff"
+          strokeWidth={2}
         >
           {chartData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name] || "var(--color-chart-1)"} />
+            <Cell key={`cell-${index}`} fill={LIGHT_STATUS_COLORS[entry.name] || "#18181b"} />
           ))}
         </Pie>
         <Tooltip
           content={({ active, payload }) => {
             if (active && payload && payload.length) {
               return (
-                <div className="rounded-md border border-border bg-card px-3 py-2 shadow text-xs">
-                  <span className="font-medium capitalize mr-2">{payload[0]?.name?.toString().toLowerCase()}:</span>
-                  <span className="num font-semibold" style={{ color: payload[0]?.payload?.fill }}>{payload[0]?.value}</span>
+                <div className="rounded-lg border border-border bg-white px-3 py-2 shadow-xs text-xs font-sans">
+                  <span className="font-medium capitalize text-foreground mr-2">{payload[0]?.name?.toString().toLowerCase()}:</span>
+                  <span className="num font-semibold text-foreground">{payload[0]?.value}</span>
                 </div>
               );
             }
@@ -54,10 +55,10 @@ export function StatusChart({ data }: Props) {
         />
         <Legend 
           verticalAlign="bottom" 
-          height={36} 
+          height={32} 
           iconType="circle" 
-          formatter={(value) => <span className="capitalize">{String(value).toLowerCase()}</span>}
-          wrapperStyle={{ fontSize: '11px', color: 'var(--color-muted-foreground)' }}
+          formatter={(value) => <span className="capitalize text-foreground font-sans text-xs">{String(value).toLowerCase()}</span>}
+          wrapperStyle={{ fontSize: '11px', color: '#71717a', fontFamily: 'var(--font-sans)' }}
         />
       </PieChart>
     </ResponsiveContainer>

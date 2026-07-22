@@ -13,13 +13,13 @@ interface Props {
 export function StatCard({ label, value, delta, suffix, format, hint }: Props) {
   const positive = (delta ?? 0) >= 0;
   return (
-    <div className="group rounded-lg border border-border bg-card p-4 card-lift sm:p-5">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+    <div className="group rounded-xl border border-border bg-white p-4 shadow-xs hover:border-border/80 transition-all sm:p-5">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-xs font-medium text-muted-foreground font-sans">{label}</p>
         {typeof delta === "number" && (
           <span
-            className={`num inline-flex items-center gap-0.5 text-[11px] ${
-              positive ? "text-[color:var(--success)]" : "text-destructive"
+            className={`num inline-flex items-center gap-0.5 text-[11px] font-medium ${
+              positive ? "text-emerald-600" : "text-rose-600"
             }`}
           >
             {positive ? (
@@ -31,15 +31,15 @@ export function StatCard({ label, value, delta, suffix, format, hint }: Props) {
           </span>
         )}
       </div>
-      <div className="mt-4 flex items-baseline gap-1">
+      <div className="mt-3 flex items-baseline gap-1">
         <CountUp
           value={value}
           format={format}
-          className="num text-3xl leading-none font-semibold tracking-tight sm:text-[38px]"
+          className="num text-2xl font-semibold tracking-tight text-foreground sm:text-3xl"
         />
-        {suffix && <span className="num text-lg text-muted-foreground">{suffix}</span>}
+        {suffix && <span className="num text-sm text-muted-foreground">{suffix}</span>}
       </div>
-      {hint && <p className="mt-2 text-xs text-muted-foreground">{hint}</p>}
+      {hint && <p className="mt-1.5 text-[11px] text-muted-foreground font-sans">{hint}</p>}
     </div>
   );
 }

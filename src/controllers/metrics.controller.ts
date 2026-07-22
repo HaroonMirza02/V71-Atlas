@@ -5,6 +5,7 @@ import { getIngestQueue } from '../queues/ingest.queue';
 import { logger } from '../lib/logger';
 import { getRedisStatus } from '../lib/redis';
 import { getDatabaseStatus } from '../lib/database';
+import { registry } from '../connectors/registry';
 
 export async function getSystemMetrics(req: Request, res: Response): Promise<void> {
     try {
@@ -30,14 +31,20 @@ export async function getSystemMetrics(req: Request, res: Response): Promise<voi
 
         // 2. Connector telemetry states
         const states = await ConnectorState.find();
-        const connectorStats = states.map((s) => ({
-            connectorId: s.connectorId,
-            isEnabled: s.isEnabled,
-            fetched: s.totalRecordsFetched,
-            ingested: s.totalRecordsIngested,
-            consecutiveErrors: s.consecutiveErrors,
-            lastError: s.lastError,
-        }));
+        const connectorStats = states.map((s) => {
+            const registered = registry.has(s.connectorId) ? registry.get(s.connectorId) : null;
+            return {
+                connectorId: s.connectorId,
+                displayName: registered ? registered.displayName : s.connectorId,
+                isEnabled: s.isEnabled,
+                fetched: s.totalRecordsFetched,
+                ingested: s.totalRecordsIngested,
+                consecutiveErrors: s.consecutiveErrors,
+                lastError: s.lastError,
+                lastSuccessAt: s.lastSuccessAt,
+                lastRunAt: s.lastRunAt,
+            };
+        });
 
         // 3. BullMQ queue details
         let queueStats = {
