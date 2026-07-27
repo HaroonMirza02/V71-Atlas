@@ -9,6 +9,7 @@
     "start": "node dist/server.js",
     "seed": "ts-node src/scripts/seed.ts",
     "benchmark": "ts-node src/scripts/benchmark.ts",
+    "testConnectors":"ts-node src/scripts/testConnectors.ts",
     "test": "jest --passWithNoTests"
   },
   "keywords": [],

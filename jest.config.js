@@ -7,6 +7,7 @@ module.exports = {
     setupFiles: ['<rootDir>/src/test/setup-env.ts'],
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
+        '^uuid$': require.resolve('uuid'),
     },
     clearMocks: true,
     verbose: true,

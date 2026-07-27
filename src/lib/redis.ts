@@ -1,10 +1,14 @@
-import Redis from 'ioredis';
+import Redis, { RedisOptions } from 'ioredis';
 import { config } from '../config';
 import { logger } from './logger';
 
 let redisClient: Redis | null = null;
 let queueRedisClient: Redis | null = null;
 
+/*
+// ==========================================
+// ORIGINAL REDIS CONNECTION IMPLEMENTATION (COMMENTED OUT)
+// ==========================================
 export function getRedisConfig(isQueueConnection = false) {
     const commonOptions = {
         maxRetriesPerRequest: isQueueConnection ? null : 3,
@@ -41,13 +45,46 @@ export function getRedisConfig(isQueueConnection = false) {
         },
     };
 }
+*/
+
+// ==========================================
+// NEW WSL REDIS CONNECTION IMPLEMENTATION
+// ==========================================
+export function getRedisConfig(isQueueConnection = false): { uri?: string; options: RedisOptions } {
+    const commonOptions: RedisOptions = {
+        maxRetriesPerRequest: isQueueConnection ? null : 3,
+        enableReadyCheck: true,
+        lazyConnect: false,
+        retryStrategy(times: number) {
+            const delay = Math.min(times * 300, 5000);
+            logger.warn('Redis reconnecting', { attempt: times, delayMs: delay });
+            return delay;
+        },
+    };
+
+    // Connects to WSL Redis instance via IPv4 loopback (127.0.0.1) or REDIS_HOST
+    // Avoids TLS/SSL overhead since local WSL traffic is unencrypted
+    const host = config.REDIS_HOST === 'localhost' ? '127.0.0.1' : (config.REDIS_HOST || '127.0.0.1');
+    const port = config.REDIS_PORT || 6379;
+    const password = config.REDIS_PASSWORD || undefined;
+
+    return {
+        options: {
+            ...commonOptions,
+            host,
+            port,
+            password,
+            tls: undefined, // Disabled for local WSL Redis
+        },
+    };
+}
 
 export function getRedisClient(isQueueConnection = false): Redis {
     if (isQueueConnection) {
         if (queueRedisClient) return queueRedisClient;
         const cfg = getRedisConfig(true);
-        queueRedisClient = 'uri' in cfg
-            ? new Redis(cfg.uri!, cfg.options)
+        queueRedisClient = cfg.uri
+            ? new Redis(cfg.uri, cfg.options)
             : new Redis(cfg.options);
 
         queueRedisClient.on('connect', () => logger.info('Queue Redis connected'));
@@ -57,8 +94,8 @@ export function getRedisClient(isQueueConnection = false): Redis {
 
     if (redisClient) return redisClient;
     const cfg = getRedisConfig(false);
-    redisClient = 'uri' in cfg
-        ? new Redis(cfg.uri!, cfg.options)
+    redisClient = cfg.uri
+        ? new Redis(cfg.uri, cfg.options)
         : new Redis(cfg.options);
 
     redisClient.on('connect', () => logger.info('Cache Redis connected'));
