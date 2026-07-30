@@ -37,11 +37,17 @@ describe('Condition 5: Database Unavailable Resilience', () => {
     });
 
     it('Global error handler captures unhandled database & system errors gracefully without crashing process', async () => {
-        // Perform request to non-existent endpoint to verify standard 404 error envelope handling
-        const response = await request(app).get('/api/v1/non-existent-route');
+        // Mock getDatabaseStatus to throw a real error to simulate unhandled database/system failure
+        jest.spyOn(databaseModule, 'getDatabaseStatus').mockImplementation(() => {
+            throw new Error('Database connection failed unexpectedly');
+        });
+        jest.spyOn(redisModule, 'getRedisStatus').mockReturnValue('ready');
 
-        expect(response.status).toBe(404);
+        const response = await request(app).get('/status');
+
+        expect(response.status).toBe(500);
         expect(response.body.error).toBeDefined();
-        expect(response.body.error.code).toBe('NOT_FOUND');
+        expect(response.body.error.code).toBe('SERVER_ERROR');
+        expect(response.body.error.message).toBe('Database connection failed unexpectedly');
     });
 });
